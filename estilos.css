@@ -231,6 +231,37 @@ body {
     color: var(--text-dark);
 }
 
+.btn-filter-all,
+.btn-filter-none {
+    width: 48%;
+    padding: 8px;
+    margin-top: 10px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: white;
+    color: var(--text-medium);
+}
+
+.btn-filter-all {
+    margin-right: 4%;
+}
+
+.btn-filter-all:hover {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+}
+
+.btn-filter-none:hover {
+    background: var(--text-medium);
+    color: white;
+    border-color: var(--text-medium);
+}
+
 /* ===== STATS ===== */
 .stats-grid {
     display: grid;

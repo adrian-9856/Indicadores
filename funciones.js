@@ -164,9 +164,50 @@ function actualizarEstadisticas() {
     document.getElementById('otrosCount').textContent = otrosIndicadores.length;
 }
 
+// ===== GENERAR FILTROS DE DEPARTAMENTO =====
+function generarFiltrosDepartamento() {
+    const departamentos = [...new Set(indicadores.map(i => i.depto))].sort();
+    const container = document.getElementById('filterDepartamentos');
+
+    const iconos = {
+        'Creamos': '🌟',
+        'IL': '💼',
+        'AE': '💚',
+        'CEEX': '📚',
+        'CCI': '👶',
+        'ME': '👩‍💼',
+        'Otros': '📋'
+    };
+
+    container.innerHTML = '';
+
+    departamentos.forEach(depto => {
+        const label = document.createElement('label');
+        label.className = 'filter-item';
+        label.innerHTML = `
+            <input type="checkbox" value="${depto}" class="filter-checkbox filter-depto" checked>
+            <span class="filter-icon">${iconos[depto] || '📋'}</span>
+            <span class="filter-label">${depto}</span>
+        `;
+        container.appendChild(label);
+    });
+
+    // Agregar event listeners a los nuevos checkboxes
+    document.querySelectorAll('.filter-depto').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            if (vistaActual === 'list') {
+                aplicarFiltros();
+            } else {
+                renderizarVista();
+            }
+        });
+    });
+}
+
 // ===== RENDERIZAR TODO =====
 function renderizarTodo() {
     actualizarEstadisticas();
+    generarFiltrosDepartamento();
     renderizarVista();
 }
 
@@ -438,18 +479,21 @@ function renderItems(items) {
 // ===== OBTENER INDICADORES FILTRADOS =====
 function obtenerIndicadoresFiltrados() {
     const texto = searchInput.value.toLowerCase();
-    const filtros = document.querySelectorAll('.filter-checkbox:checked');
-    const tiposFiltrados = Array.from(filtros).map(f => f.value);
+    const filtrosTipo = document.querySelectorAll('.filter-tipo:checked');
+    const tiposFiltrados = Array.from(filtrosTipo).map(f => f.value);
+    const filtrosDepto = document.querySelectorAll('.filter-depto:checked');
+    const deptosFiltrados = Array.from(filtrosDepto).map(f => f.value);
 
     return indicadores.filter(ind => {
-        const coincideTexto = 
+        const coincideTexto =
             ind.codigo.toLowerCase().includes(texto) ||
             ind.nombre.toLowerCase().includes(texto) ||
             ind.criterio.toLowerCase().includes(texto);
-        
-        const coincideTipo = tiposFiltrados.includes(ind.tipo);
 
-        return coincideTexto && coincideTipo;
+        const coincideTipo = tiposFiltrados.includes(ind.tipo);
+        const coincideDepto = deptosFiltrados.includes(ind.depto);
+
+        return coincideTexto && coincideTipo && coincideDepto;
     });
 }
 
@@ -717,7 +761,7 @@ modalOverlay.addEventListener('click', (e) => {
     if (e.target === modalOverlay) cerrarModal();
 });
 
-document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+document.querySelectorAll('.filter-tipo').forEach(checkbox => {
     checkbox.addEventListener('change', () => {
         if (vistaActual === 'list') {
             aplicarFiltros();
@@ -725,6 +769,25 @@ document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
             renderizarVista();
         }
     });
+});
+
+// Event listeners para botones de selección masiva de departamentos
+document.getElementById('btnSelectAllDept').addEventListener('click', () => {
+    document.querySelectorAll('.filter-depto').forEach(cb => cb.checked = true);
+    if (vistaActual === 'list') {
+        aplicarFiltros();
+    } else {
+        renderizarVista();
+    }
+});
+
+document.getElementById('btnSelectNoneDept').addEventListener('click', () => {
+    document.querySelectorAll('.filter-depto').forEach(cb => cb.checked = false);
+    if (vistaActual === 'list') {
+        aplicarFiltros();
+    } else {
+        renderizarVista();
+    }
 });
 
 document.querySelectorAll('.tab-btn').forEach(btn => {

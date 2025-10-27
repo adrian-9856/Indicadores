@@ -52,31 +52,41 @@
                 </div>
             </div>
 
-            <!-- FILTROS -->
+            <!-- FILTROS POR TIPO -->
             <div class="sidebar-card">
                 <h3 class="sidebar-title">🎯 Filtrar por Tipo</h3>
                 <div class="filter-group">
                     <label class="filter-item">
-                        <input type="checkbox" value="Proceso" class="filter-checkbox" checked>
+                        <input type="checkbox" value="Proceso" class="filter-checkbox filter-tipo" checked>
                         <span class="filter-icon">📊</span>
                         <span class="filter-label">Proceso</span>
                     </label>
                     <label class="filter-item">
-                        <input type="checkbox" value="Resultado" class="filter-checkbox" checked>
+                        <input type="checkbox" value="Resultado" class="filter-checkbox filter-tipo" checked>
                         <span class="filter-icon">✅</span>
                         <span class="filter-label">Resultado</span>
                     </label>
                     <label class="filter-item">
-                        <input type="checkbox" value="Impacto" class="filter-checkbox" checked>
+                        <input type="checkbox" value="Impacto" class="filter-checkbox filter-tipo" checked>
                         <span class="filter-icon">💫</span>
                         <span class="filter-label">Impacto</span>
                     </label>
                     <label class="filter-item">
-                        <input type="checkbox" value="No especificado" class="filter-checkbox" checked>
+                        <input type="checkbox" value="No especificado" class="filter-checkbox filter-tipo" checked>
                         <span class="filter-icon">❓</span>
                         <span class="filter-label">No especificado</span>
                     </label>
                 </div>
+            </div>
+
+            <!-- FILTROS POR DEPARTAMENTO -->
+            <div class="sidebar-card">
+                <h3 class="sidebar-title">🏢 Filtrar por Departamento</h3>
+                <div class="filter-group" id="filterDepartamentos">
+                    <!-- Se llenará dinámicamente con JavaScript -->
+                </div>
+                <button class="btn-filter-all" id="btnSelectAllDept">✓ Todos</button>
+                <button class="btn-filter-none" id="btnSelectNoneDept">✗ Ninguno</button>
             </div>
 
             <!-- ESTADÍSTICAS -->
