@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Indicadores - Creamos</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1 class="header-title">Sistema de Indicadores</h1>
+                <p class="header-subtitle">Monitoreo y Evaluación - Creamos</p>
+            </div>
+            <div class="header-right">
+                <input type="text" id="searchInput" placeholder="🔍 Buscar indicador..." class="search-input">
+            </div>
+        </div>
+    </header>
+
+    <!-- NAVIGATION TABS -->
+    <nav class="nav-tabs">
+        <button class="tab-btn active" data-view="cards">
+            <span class="tab-icon">📇</span>
+            <span class="tab-label">Tarjetas</span>
+        </button>
+        <button class="tab-btn" data-view="diagram">
+            <span class="tab-icon">🔷</span>
+            <span class="tab-label">Diagrama</span>
+        </button>
+        <button class="tab-btn" data-view="list">
+            <span class="tab-icon">📋</span>
+            <span class="tab-label">Lista</span>
+        </button>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <div class="main-wrapper">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <!-- CARGAR DATOS -->
+            <div class="sidebar-card">
+                <h3 class="sidebar-title">⚙️ Configuración</h3>
+                <div class="input-group">
+                    <label>URL de Google Sheets</label>
+                    <input type="text" id="urlSheet" placeholder="Pega tu URL aquí..." class="input-field">
+                    <button id="btnCargar" class="btn-primary">Cargar Datos</button>
+                </div>
+            </div>
+
+            <!-- FILTROS -->
+            <div class="sidebar-card">
+                <h3 class="sidebar-title">🎯 Filtrar por Tipo</h3>
+                <div class="filter-group">
+                    <label class="filter-item">
+                        <input type="checkbox" value="Proceso" class="filter-checkbox" checked>
+                        <span class="filter-icon">📊</span>
+                        <span class="filter-label">Proceso</span>
+                    </label>
+                    <label class="filter-item">
+                        <input type="checkbox" value="Resultado" class="filter-checkbox" checked>
+                        <span class="filter-icon">✅</span>
+                        <span class="filter-label">Resultado</span>
+                    </label>
+                    <label class="filter-item">
+                        <input type="checkbox" value="Impacto" class="filter-checkbox" checked>
+                        <span class="filter-icon">💫</span>
+                        <span class="filter-label">Impacto</span>
+                    </label>
+                    <label class="filter-item">
+                        <input type="checkbox" value="No especificado" class="filter-checkbox" checked>
+                        <span class="filter-icon">❓</span>
+                        <span class="filter-label">No especificado</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- ESTADÍSTICAS -->
+            <div class="sidebar-card">
+                <h3 class="sidebar-title">📈 Estadísticas</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalCount">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="creamosCount">0</div>
+                        <div class="stat-label">Creamos</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="otrosCount">0</div>
+                        <div class="stat-label">Otros</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- CONTENT AREA -->
+        <main class="content-area">
+            
+            <!-- VISTA TARJETAS -->
+            <div class="view-content active" id="viewCards">
+                <div class="section-header">
+                    <h2 class="section-title">Indicadores por Programa</h2>
+                    <div class="section-count" id="cardsCount">0 indicadores</div>
+                </div>
+                <div id="cardsGrid" class="cards-grid"></div>
+            </div>
+
+            <!-- VISTA DIAGRAMA -->
+            <div class="view-content" id="viewDiagram">
+                <div class="section-header">
+                    <h2 class="section-title">Diagrama Jerárquico</h2>
+                    <p class="section-subtitle">Haz clic en un programa para ver sus indicadores</p>
+                </div>
+                <div class="diagram-wrapper">
+                    <div class="diagram-row">
+                        <div class="diagram-node root-node">
+                            <div class="node-icon">🌟</div>
+                            <div class="node-title">CREAMOS</div>
+                            <div class="node-count" id="rootCount">0</div>
+                        </div>
+                    </div>
+                    <div class="diagram-row" id="programasRow"></div>
+                    <div class="diagram-row" id="indicadoresRow"></div>
+                </div>
+            </div>
+
+            <!-- VISTA LISTA -->
+            <div class="view-content" id="viewList">
+                <div class="section-header">
+                    <h2 class="section-title">Lista de Indicadores</h2>
+                </div>
+                <div id="listAccordion" class="list-accordion"></div>
+            </div>
+
+            <!-- EMPTY STATE -->
+            <div class="empty-state" id="emptyState">
+                <div class="empty-icon">📥</div>
+                <h3>No hay datos cargados</h3>
+                <p>Carga tu archivo de Google Sheets para comenzar</p>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-container">
+            <button class="modal-close" id="modalClose">&times;</button>
+            
+            <div class="modal-header">
+                <h2 id="modalTitle" class="modal-title"></h2>
+                <div class="modal-tags">
+                    <span class="modal-tag tag-code" id="modalCode"></span>
+                    <span class="modal-tag tag-type" id="modalType"></span>
+                </div>
+            </div>
+
+            <div class="modal-body">
+                <div class="modal-field">
+                    <label>Código</label>
+                    <p id="modalCodigo"></p>
+                </div>
+                <div class="modal-field">
+                    <label>Criterio</label>
+                    <p id="modalCriterio"></p>
+                </div>
+                <div class="modal-field">
+                    <label>Descripción</label>
+                    <p id="modalDesc"></p>
+                </div>
+                <div class="modal-field">
+                    <label>Tipo</label>
+                    <p id="modalTipo"></p>
+                </div>
+                <div class="modal-field">
+                    <label>Departamento</label>
+                    <p id="modalDepto"></p>
+                </div>
+                <div class="modal-field">
+                    <label>Programa</label>
+                    <p id="modalPrograma"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="funciones.js"></script>
+</body>
+</html>
