@@ -1,15 +1,14 @@
 // ===== VARIABLES GLOBALES =====
 let indicadores = [];
-let vistaActual = 'list';
+let vistaActual = 'cards';
 let programaSeleccionado = null;
 
 // ===== ELEMENTOS DOM =====
 const urlSheet = document.getElementById('urlSheet');
 const btnCargar = document.getElementById('btnCargar');
 const searchInput = document.getElementById('searchInput');
-const modal = document.getElementById('modal');
+const modalOverlay = document.getElementById('modalOverlay');
 const modalClose = document.getElementById('modalClose');
-const modalBackdrop = document.getElementById('modalBackdrop');
 
 // ===== CARGAR DATOS =====
 async function cargarDatos() {
@@ -189,8 +188,8 @@ function renderizarVista() {
 // ===== RENDERIZAR VISTA DIAGRAMA =====
 function renderizarDiagrama() {
     const creamosIndicadores = indicadores.filter(i => i.depto === 'Creamos');
-    const programasLevel = document.getElementById('programasLevel');
-    const indicadoresLevel = document.getElementById('indicadoresLevel');
+    const programasLevel = document.getElementById('programasRow');
+    const indicadoresLevel = document.getElementById('indicadoresRow');
 
     document.getElementById('rootCount').textContent = `${creamosIndicadores.length} indicadores`;
 
@@ -266,7 +265,7 @@ function seleccionarPrograma(programa) {
 
 // ===== RENDERIZAR VISTA TARJETAS =====
 function renderizarTarjetas() {
-    const container = document.getElementById('cardsContainer');
+    const container = document.getElementById('cardsGrid');
     const indsFiltrados = obtenerIndicadoresFiltrados();
 
     container.innerHTML = '';
@@ -297,7 +296,7 @@ function renderizarTarjetas() {
 
 // ===== RENDERIZAR VISTA LISTA =====
 function renderizarLista() {
-    const container = document.getElementById('accordionContainer');
+    const container = document.getElementById('listAccordion');
     container.innerHTML = '';
 
     const creamosIndicadores = indicadores.filter(i => i.depto === 'Creamos');
@@ -413,7 +412,7 @@ function renderItems(items) {
 // ===== OBTENER INDICADORES FILTRADOS =====
 function obtenerIndicadoresFiltrados() {
     const texto = searchInput.value.toLowerCase();
-    const filtros = document.querySelectorAll('.filter-type:checked');
+    const filtros = document.querySelectorAll('.filter-checkbox:checked');
     const tiposFiltrados = Array.from(filtros).map(f => f.value);
 
     return indicadores.filter(ind => {
@@ -466,12 +465,12 @@ function abrirModal(ind) {
     document.getElementById('modalDepto').textContent = ind.depto;
     document.getElementById('modalPrograma').textContent = ind.programa;
 
-    modal.classList.add('active');
+    modalOverlay.classList.add('active');
 }
 
 // ===== CERRAR MODAL =====
 function cerrarModal() {
-    modal.classList.remove('active');
+    modalOverlay.classList.remove('active');
 }
 
 // ===== CAMBIAR VISTA =====
@@ -479,14 +478,14 @@ function cambiarVista(vista) {
     vistaActual = vista;
     programaSeleccionado = null;
 
-    document.querySelectorAll('.view-toggle').forEach(btn => {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
         if (btn.dataset.view === vista) {
             btn.classList.add('active');
         }
     });
 
-    document.querySelectorAll('.view-container').forEach(container => {
+    document.querySelectorAll('.view-content').forEach(container => {
         container.classList.remove('active');
     });
 
@@ -515,9 +514,11 @@ searchInput.addEventListener('input', () => {
 });
 
 modalClose.addEventListener('click', cerrarModal);
-modalBackdrop.addEventListener('click', cerrarModal);
+modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) cerrarModal();
+});
 
-document.querySelectorAll('.filter-type').forEach(checkbox => {
+document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
     checkbox.addEventListener('change', () => {
         if (vistaActual === 'list') {
             aplicarFiltros();
@@ -527,7 +528,7 @@ document.querySelectorAll('.filter-type').forEach(checkbox => {
     });
 });
 
-document.querySelectorAll('.view-toggle').forEach(btn => {
+document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         cambiarVista(btn.dataset.view);
     });
