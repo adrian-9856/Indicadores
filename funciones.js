@@ -481,15 +481,30 @@ function setupIndicadorClicks() {
 
 // ===== ABRIR MODAL =====
 function abrirModal(ind) {
+    // Guardar indicador actual para exportación
+    window.indicadorActual = ind;
+
+    // Tab Información
     document.getElementById('modalTitle').textContent = ind.nombre;
     document.getElementById('modalCode').textContent = ind.codigo;
     document.getElementById('modalType').textContent = ind.tipo;
+    document.getElementById('modalDeptTag').textContent = ind.depto;
     document.getElementById('modalCodigo').textContent = ind.codigo;
-    document.getElementById('modalCriterio').textContent = ind.criterio;
-    document.getElementById('modalDesc').textContent = ind.desc || 'Sin descripción';
+    document.getElementById('modalCriterio').textContent = ind.criterio || 'No especificado';
+    document.getElementById('modalDesc').textContent = ind.desc || 'Sin descripción disponible';
     document.getElementById('modalTipo').textContent = ind.tipo;
     document.getElementById('modalDepto').textContent = ind.depto;
     document.getElementById('modalPrograma').textContent = ind.programa;
+    document.getElementById('modalNivel').textContent = ind.nivel || 'No especificado';
+
+    // Tab Medición
+    document.getElementById('modalPeriodicidad').textContent = ind.tiempo || 'No especificado';
+
+    // Resetear a la primera tab
+    document.querySelectorAll('.modal-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.modal-tab-content').forEach(content => content.classList.remove('active'));
+    document.querySelector('.modal-tab[data-tab="info"]').classList.add('active');
+    document.getElementById('tabInfo').classList.add('active');
 
     modalOverlay.classList.add('active');
 }
@@ -497,6 +512,164 @@ function abrirModal(ind) {
 // ===== CERRAR MODAL =====
 function cerrarModal() {
     modalOverlay.classList.remove('active');
+}
+
+// ===== CAMBIAR TAB MODAL =====
+function cambiarTabModal(tabName) {
+    document.querySelectorAll('.modal-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.modal-tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+
+    document.querySelector(`.modal-tab[data-tab="${tabName}"]`).classList.add('active');
+    document.getElementById(`tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.add('active');
+}
+
+// ===== EXPORTAR A PDF =====
+function exportarPDF() {
+    const ind = window.indicadorActual;
+    if (!ind) return;
+
+    // Crear contenido HTML para imprimir
+    const contenido = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Indicador ${ind.codigo}</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.6; }
+                h1 { color: #2C5AA0; border-bottom: 3px solid #FF6B35; padding-bottom: 10px; }
+                .header { background: #F8F9FA; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+                .tag { display: inline-block; padding: 5px 15px; border-radius: 20px; margin-right: 10px; font-weight: bold; font-size: 12px; }
+                .tag-code { background: #FF6B35; color: white; }
+                .tag-type { background: #27AE60; color: white; }
+                .tag-dept { background: #2C5AA0; color: white; }
+                .section { margin-bottom: 30px; }
+                .section-title { color: #2C5AA0; font-size: 18px; font-weight: bold; margin-bottom: 10px; border-left: 4px solid #FF6B35; padding-left: 10px; }
+                .field { margin-bottom: 15px; }
+                .field-label { font-weight: bold; color: #5A6C7D; font-size: 13px; text-transform: uppercase; }
+                .field-value { margin-top: 5px; color: #2C3E50; }
+                .formula { background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%); color: white; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; }
+                .guidance ol { padding-left: 20px; }
+                .guidance li { margin-bottom: 8px; }
+            </style>
+        </head>
+        <body>
+            <h1>${ind.nombre}</h1>
+            <div class="header">
+                <span class="tag tag-code">${ind.codigo}</span>
+                <span class="tag tag-type">${ind.tipo}</span>
+                <span class="tag tag-dept">${ind.depto}</span>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📋 Información General</div>
+                <div class="field">
+                    <div class="field-label">Código</div>
+                    <div class="field-value">${ind.codigo}</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Criterio</div>
+                    <div class="field-value">${ind.criterio || 'No especificado'}</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Descripción</div>
+                    <div class="field-value">${ind.desc || 'Sin descripción disponible'}</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Programa</div>
+                    <div class="field-value">${ind.programa}</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Nivel de Medición</div>
+                    <div class="field-value">${ind.nivel || 'No especificado'}</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📏 Medición</div>
+                <div class="field">
+                    <div class="field-label">Fórmula de Cálculo</div>
+                    <div class="formula">% = (Numerador / Denominador) × 100</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Periodicidad</div>
+                    <div class="field-value">${ind.tiempo || 'No especificado'}</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Desagregación Recomendada</div>
+                    <div class="field-value">Por sexo, edad, ubicación geográfica</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📖 Guía de Recolección</div>
+                <div class="guidance">
+                    <ol>
+                        <li>Identificar la fuente de datos apropiada</li>
+                        <li>Definir el método de recolección</li>
+                        <li>Establecer el tamaño de muestra necesario</li>
+                        <li>Recolectar datos de manera sistemática</li>
+                        <li>Verificar la calidad de los datos</li>
+                    </ol>
+                </div>
+                <div class="field">
+                    <div class="field-label">Fuentes de Verificación</div>
+                    <div class="field-value">Registros administrativos, encuestas, entrevistas, observación directa</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 50px; padding-top: 20px; border-top: 2px solid #E1E8ED; text-align: center; color: #95A5A6; font-size: 12px;">
+                Documento generado por Sistema de Indicadores - Creamos
+            </div>
+        </body>
+        </html>
+    `;
+
+    // Abrir ventana de impresión
+    const ventana = window.open('', '', 'width=800,height=600');
+    ventana.document.write(contenido);
+    ventana.document.close();
+    ventana.print();
+}
+
+// ===== EXPORTAR A EXCEL =====
+function exportarExcel() {
+    const ind = window.indicadorActual;
+    if (!ind) return;
+
+    // Crear contenido CSV
+    const csv = [
+        ['Campo', 'Valor'],
+        ['Código', ind.codigo],
+        ['Nombre', ind.nombre],
+        ['Criterio', ind.criterio || ''],
+        ['Descripción', ind.desc || ''],
+        ['Tipo', ind.tipo],
+        ['Departamento', ind.depto],
+        ['Programa', ind.programa],
+        ['Nivel', ind.nivel || ''],
+        ['Periodicidad', ind.tiempo || ''],
+        [''],
+        ['Fórmula', '% = (Numerador / Denominador) × 100'],
+        ['Desagregación', 'Por sexo, edad, ubicación geográfica'],
+        ['Fuentes de Verificación', 'Registros administrativos, encuestas, entrevistas, observación directa']
+    ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+
+    // Crear y descargar archivo
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Indicador_${ind.codigo}.csv`;
+    link.click();
+}
+
+// ===== IMPRIMIR INDICADOR =====
+function imprimirIndicador() {
+    exportarPDF();
 }
 
 // ===== CAMBIAR VISTA =====
@@ -559,6 +732,18 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         cambiarVista(btn.dataset.view);
     });
 });
+
+// Event listeners para tabs del modal
+document.querySelectorAll('.modal-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        cambiarTabModal(tab.dataset.tab);
+    });
+});
+
+// Event listeners para botones de exportación
+document.getElementById('btnExportPDF').addEventListener('click', exportarPDF);
+document.getElementById('btnExportExcel').addEventListener('click', exportarExcel);
+document.getElementById('btnPrint').addEventListener('click', imprimirIndicador);
 
 // ===== INICIALIZACIÓN =====
 window.addEventListener('load', () => {

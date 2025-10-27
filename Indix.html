@@ -152,39 +152,119 @@
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-container">
             <button class="modal-close" id="modalClose">&times;</button>
-            
+
             <div class="modal-header">
                 <h2 id="modalTitle" class="modal-title"></h2>
                 <div class="modal-tags">
                     <span class="modal-tag tag-code" id="modalCode"></span>
                     <span class="modal-tag tag-type" id="modalType"></span>
+                    <span class="modal-tag tag-dept" id="modalDeptTag"></span>
                 </div>
             </div>
 
+            <!-- MODAL ACTIONS -->
+            <div class="modal-actions">
+                <button class="btn-action" id="btnExportPDF" title="Exportar a PDF">
+                    📄 PDF
+                </button>
+                <button class="btn-action" id="btnExportExcel" title="Exportar a Excel">
+                    📊 Excel
+                </button>
+                <button class="btn-action" id="btnPrint" title="Imprimir">
+                    🖨️ Imprimir
+                </button>
+            </div>
+
+            <!-- MODAL TABS -->
+            <div class="modal-tabs">
+                <button class="modal-tab active" data-tab="info">📋 Información</button>
+                <button class="modal-tab" data-tab="measurement">📏 Medición</button>
+                <button class="modal-tab" data-tab="guidance">📖 Guía</button>
+            </div>
+
             <div class="modal-body">
-                <div class="modal-field">
-                    <label>Código</label>
-                    <p id="modalCodigo"></p>
+                <!-- TAB: INFORMACIÓN -->
+                <div class="modal-tab-content active" id="tabInfo">
+                    <div class="modal-field">
+                        <label>Código</label>
+                        <p id="modalCodigo"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>Criterio</label>
+                        <p id="modalCriterio"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>Descripción</label>
+                        <p id="modalDesc"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>Tipo de Indicador</label>
+                        <p id="modalTipo"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>Departamento</label>
+                        <p id="modalDepto"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>Programa</label>
+                        <p id="modalPrograma"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>Nivel de Medición</label>
+                        <p id="modalNivel"></p>
+                    </div>
                 </div>
-                <div class="modal-field">
-                    <label>Criterio</label>
-                    <p id="modalCriterio"></p>
+
+                <!-- TAB: MEDICIÓN -->
+                <div class="modal-tab-content" id="tabMeasurement">
+                    <div class="modal-field">
+                        <label>🧮 Fórmula de Cálculo</label>
+                        <div class="formula-box" id="modalFormula">
+                            <p>% = (Numerador / Denominador) × 100</p>
+                        </div>
+                    </div>
+                    <div class="modal-field">
+                        <label>📊 Desagregación Recomendada</label>
+                        <p id="modalDesagregacion">Por sexo, edad, ubicación geográfica</p>
+                    </div>
+                    <div class="modal-field">
+                        <label>📅 Periodicidad de Medición</label>
+                        <p id="modalPeriodicidad"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>🎯 Meta/Objetivo</label>
+                        <p id="modalMeta">Definir según contexto del proyecto</p>
+                    </div>
                 </div>
-                <div class="modal-field">
-                    <label>Descripción</label>
-                    <p id="modalDesc"></p>
-                </div>
-                <div class="modal-field">
-                    <label>Tipo</label>
-                    <p id="modalTipo"></p>
-                </div>
-                <div class="modal-field">
-                    <label>Departamento</label>
-                    <p id="modalDepto"></p>
-                </div>
-                <div class="modal-field">
-                    <label>Programa</label>
-                    <p id="modalPrograma"></p>
+
+                <!-- TAB: GUÍA -->
+                <div class="modal-tab-content" id="tabGuidance">
+                    <div class="modal-field">
+                        <label>📝 Guía de Recolección de Datos</label>
+                        <div class="guidance-box">
+                            <ol id="modalGuia">
+                                <li>Identificar la fuente de datos apropiada</li>
+                                <li>Definir el método de recolección</li>
+                                <li>Establecer el tamaño de muestra necesario</li>
+                                <li>Recolectar datos de manera sistemática</li>
+                                <li>Verificar la calidad de los datos</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="modal-field">
+                        <label>✅ Fuentes de Verificación</label>
+                        <p id="modalFuentes">Registros administrativos, encuestas, entrevistas, observación directa</p>
+                    </div>
+                    <div class="modal-field">
+                        <label>💡 Ejemplo Práctico</label>
+                        <div class="example-box" id="modalEjemplo">
+                            <p>Si 75 de 100 participantes completaron el programa, el indicador sería: (75/100) × 100 = 75%</p>
+                        </div>
+                    </div>
+                    <div class="modal-field">
+                        <label>⚠️ Consideraciones</label>
+                        <p id="modalConsideraciones">Asegurar que los datos sean representativos y verificables</p>
+                    </div>
                 </div>
             </div>
         </div>
