@@ -17,6 +17,9 @@
             </div>
             <div class="header-right">
                 <input type="text" id="searchInput" placeholder="🔍 Buscar indicador..." class="search-input">
+                <button id="themeToggle" class="theme-toggle" title="Cambiar tema">
+                    <span class="theme-icon">🌙</span>
+                </button>
             </div>
         </div>
     </header>
@@ -282,6 +285,59 @@
                         <label>⚠️ Consideraciones</label>
                         <p id="modalConsideraciones">Asegurar que los datos sean representativos y verificables</p>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATIONS -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p class="loading-text">Cargando datos...</p>
+        </div>
+    </div>
+
+    <!-- KEYBOARD SHORTCUTS HELP -->
+    <div id="shortcutsModal" class="shortcuts-modal">
+        <div class="shortcuts-content">
+            <button class="shortcuts-close" id="shortcutsClose">&times;</button>
+            <h3>⌨️ Atajos de Teclado</h3>
+            <div class="shortcuts-grid">
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>K</kbd>
+                    <span>Búsqueda rápida</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>1</kbd>
+                    <span>Vista Tarjetas</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>2</kbd>
+                    <span>Vista Diagrama</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>3</kbd>
+                    <span>Vista Lista</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>F</kbd>
+                    <span>Ver Favoritos</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>D</kbd>
+                    <span>Modo Oscuro</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Esc</kbd>
+                    <span>Cerrar Modal</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>?</kbd>
+                    <span>Mostrar Ayuda</span>
                 </div>
             </div>
         </div>

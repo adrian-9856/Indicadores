@@ -9,22 +9,29 @@ const btnCargar = document.getElementById('btnCargar');
 const searchInput = document.getElementById('searchInput');
 const modalOverlay = document.getElementById('modalOverlay');
 const modalClose = document.getElementById('modalClose');
+const themeToggle = document.getElementById('themeToggle');
+const loadingOverlay = document.getElementById('loadingOverlay');
+const toastContainer = document.getElementById('toastContainer');
+const shortcutsModal = document.getElementById('shortcutsModal');
+const shortcutsClose = document.getElementById('shortcutsClose');
 
 // ===== CARGAR DATOS =====
 async function cargarDatos() {
     const url = urlSheet.value.trim();
     if (!url) {
-        alert('⚠️ Por favor pega la URL de Google Sheets');
+        showToast('Advertencia', 'Por favor pega la URL de Google Sheets', 'warning');
         return;
     }
 
     const sheetID = url.includes('/d/') ? url.split('/d/')[1].split('/')[0] : null;
     if (!sheetID) {
-        alert('❌ URL inválida. Asegúrate de copiar la URL completa.');
+        showToast('Error', 'URL inválida. Asegúrate de copiar la URL completa', 'error');
         return;
     }
 
     try {
+        showLoading('Cargando datos desde Google Sheets...');
+
         const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetID}/export?format=csv`;
         const response = await fetch(csvUrl);
         const csv = await response.text();
@@ -40,7 +47,7 @@ async function cargarDatos() {
             const idx = headers.findIndex(h => h.toLowerCase().includes(nombre.toLowerCase()));
             return idx >= 0 ? idx : -1;
         };
-        
+
         const idxCodigo = getColIndex('código');
         const idxCriterio = getColIndex('criterio');
         const idxIndicador = getColIndex('indicador');
@@ -53,7 +60,7 @@ async function cargarDatos() {
             if (!linea) continue;
 
             const cols = parseCSVLine(linea);
-            
+
             const codigo = getColValue(cols, idxCodigo);
             const criterio = getColValue(cols, idxCriterio);
             const nombre = getColValue(cols, idxIndicador);
@@ -86,21 +93,146 @@ async function cargarDatos() {
             });
         }
 
+        hideLoading();
+
         if (indicadores.length === 0) {
-            alert('⚠️ No se encontraron indicadores válidos en el archivo');
+            showToast('Advertencia', 'No se encontraron indicadores válidos en el archivo', 'warning');
             return;
         }
 
         renderizarTodo();
         localStorage.setItem('urlSheet', url);
         document.getElementById('emptyState').style.display = 'none';
-        
-        alert(`✅ ${indicadores.length} indicadores cargados exitosamente`);
+
+        showToast('Éxito', `${indicadores.length} indicadores cargados correctamente`, 'success');
 
     } catch (error) {
+        hideLoading();
         console.error('Error completo:', error);
-        alert('❌ Error al cargar datos: ' + error.message);
+        showToast('Error', `No se pudieron cargar los datos: ${error.message}`, 'error');
     }
+}
+
+// ===== UTILIDADES UI =====
+
+// Dark Mode
+function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+
+    // Actualizar icono
+    const icon = themeToggle.querySelector('.theme-icon');
+    icon.textContent = isDark ? '☀️' : '🌙';
+
+    // Mostrar toast
+    showToast('Tema actualizado', `Modo ${isDark ? 'oscuro' : 'claro'} activado`, 'info');
+}
+
+// Toast Notifications
+function showToast(title, message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+    };
+
+    toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || 'ℹ️'}</div>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close">&times;</button>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    // Animar entrada
+    setTimeout(() => toast.classList.add('show'), 10);
+
+    // Configurar cierre
+    const closeBtn = toast.querySelector('.toast-close');
+    closeBtn.addEventListener('click', () => removeToast(toast));
+
+    // Auto-cerrar después de 5 segundos
+    setTimeout(() => removeToast(toast), 5000);
+}
+
+function removeToast(toast) {
+    toast.classList.remove('show');
+    toast.classList.add('hide');
+    setTimeout(() => toast.remove(), 300);
+}
+
+// Loading Overlay
+function showLoading(text = 'Cargando datos...') {
+    loadingOverlay.querySelector('.loading-text').textContent = text;
+    loadingOverlay.classList.add('active');
+}
+
+function hideLoading() {
+    loadingOverlay.classList.remove('active');
+}
+
+// Keyboard Shortcuts
+function initKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Ctrl + K: Búsqueda rápida
+        if (e.ctrlKey && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+
+        // Ctrl + 1: Vista Tarjetas
+        if (e.ctrlKey && e.key === '1') {
+            e.preventDefault();
+            cambiarVista('cards');
+        }
+
+        // Ctrl + 2: Vista Diagrama
+        if (e.ctrlKey && e.key === '2') {
+            e.preventDefault();
+            cambiarVista('diagram');
+        }
+
+        // Ctrl + 3: Vista Lista
+        if (e.ctrlKey && e.key === '3') {
+            e.preventDefault();
+            cambiarVista('list');
+        }
+
+        // Ctrl + D: Modo Oscuro
+        if (e.ctrlKey && e.key === 'd') {
+            e.preventDefault();
+            toggleTheme();
+        }
+
+        // Esc: Cerrar Modal
+        if (e.key === 'Escape') {
+            if (modalOverlay.classList.contains('active')) {
+                cerrarModal();
+            }
+            if (shortcutsModal.classList.contains('active')) {
+                toggleShortcutsModal();
+            }
+        }
+
+        // ?: Mostrar Ayuda
+        if (e.key === '?' && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+            e.preventDefault();
+            toggleShortcutsModal();
+        }
+    });
+}
+
+function toggleShortcutsModal() {
+    shortcutsModal.classList.toggle('active');
 }
 
 // ===== OBTENER VALOR DE COLUMNA =====
@@ -845,10 +977,35 @@ document.getElementById('btnExportPDF').addEventListener('click', exportarPDF);
 document.getElementById('btnExportExcel').addEventListener('click', exportarExcel);
 document.getElementById('btnPrint').addEventListener('click', imprimirIndicador);
 
+// Event listeners para nuevas funcionalidades UI
+themeToggle.addEventListener('click', toggleTheme);
+
+shortcutsClose.addEventListener('click', toggleShortcutsModal);
+shortcutsModal.addEventListener('click', (e) => {
+    if (e.target === shortcutsModal) toggleShortcutsModal();
+});
+
 // ===== INICIALIZACIÓN =====
 window.addEventListener('load', () => {
+    // Cargar URL guardada
     const url = localStorage.getItem('urlSheet');
     if (url) {
         urlSheet.value = url;
     }
+
+    // Inicializar tema desde localStorage
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        const icon = themeToggle.querySelector('.theme-icon');
+        if (icon) icon.textContent = '☀️';
+    }
+
+    // Inicializar atajos de teclado
+    initKeyboardShortcuts();
+
+    // Mostrar mensaje de bienvenida
+    setTimeout(() => {
+        showToast('Bienvenido', 'Presiona ? para ver los atajos de teclado', 'info');
+    }, 1000);
 });
