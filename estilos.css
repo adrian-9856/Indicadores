@@ -294,6 +294,34 @@ body {
     min-width: 0;
 }
 
+/* ===== BREADCRUMBS ===== */
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: var(--text-medium);
+    border-bottom: 1px solid var(--border);
+}
+
+.breadcrumb-item {
+    color: var(--text-medium);
+    transition: all 0.3s;
+}
+
+.breadcrumb-item.active {
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.breadcrumb-separator {
+    color: var(--text-light);
+    font-weight: 700;
+    user-select: none;
+}
+
 .view-content {
     display: none;
 }

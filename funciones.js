@@ -716,6 +716,20 @@ function imprimirIndicador() {
     exportarPDF();
 }
 
+// ===== ACTUALIZAR BREADCRUMBS =====
+function actualizarBreadcrumbs() {
+    const viewNames = {
+        'cards': '📇 Tarjetas',
+        'diagram': '🔷 Diagrama',
+        'list': '📋 Lista'
+    };
+
+    const breadcrumbView = document.getElementById('breadcrumbView');
+    if (breadcrumbView) {
+        breadcrumbView.textContent = viewNames[vistaActual] || 'Vista';
+    }
+}
+
 // ===== CAMBIAR VISTA =====
 function cambiarVista(vista) {
     vistaActual = vista;
@@ -739,6 +753,9 @@ function cambiarVista(vista) {
     };
 
     document.getElementById(viewMap[vista]).classList.add('active');
+
+    // Actualizar breadcrumbs
+    actualizarBreadcrumbs();
 
     if (indicadores.length > 0) {
         renderizarVista();
