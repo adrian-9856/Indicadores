@@ -191,15 +191,15 @@ function renderizarDiagrama() {
     const programasLevel = document.getElementById('programasRow');
     const indicadoresLevel = document.getElementById('indicadoresRow');
 
-    document.getElementById('rootCount').textContent = `${creamosIndicadores.length} indicadores`;
+    // Contar solo indicadores de Creamos que pasan los filtros
+    const creamosFiltrados = obtenerIndicadoresFiltrados().filter(i => i.depto === 'Creamos');
+    document.getElementById('rootCount').textContent = `${creamosFiltrados.length}/${creamosIndicadores.length} indicadores`;
 
     programasLevel.innerHTML = '';
     indicadoresLevel.innerHTML = '';
 
     // Obtener programas únicos de Creamos
     const programasUnicos = [...new Set(creamosIndicadores.map(i => i.programa))].sort();
-
-    console.log('Programas únicos en diagrama:', programasUnicos);
 
     if (programasUnicos.length === 0) {
         programasLevel.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">No hay programas de Creamos</p>';
@@ -210,9 +210,10 @@ function renderizarDiagrama() {
         // Filtrar por programa Y por filtros de tipo
         const indsPrograma = creamosIndicadores.filter(i => i.programa === prog);
         const indsFiltrados = obtenerIndicadoresFiltrados().filter(i => i.programa === prog && i.depto === 'Creamos');
-        
+
+        // Determinar icono según el código del programa
         const icono = prog.includes('I') ? '💫' : prog.includes('P') ? '🎯' : '✅';
-        
+
         const node = document.createElement('div');
         node.className = `diagram-node programa-node ${programaSeleccionado === prog ? 'selected' : ''}`;
         node.dataset.programa = prog;
@@ -229,8 +230,6 @@ function renderizarDiagrama() {
     if (programaSeleccionado) {
         const indsFiltrados = obtenerIndicadoresFiltrados()
             .filter(i => i.programa === programaSeleccionado && i.depto === 'Creamos');
-
-        console.log('Indicadores filtrados para', programaSeleccionado, ':', indsFiltrados.length);
 
         if (indsFiltrados.length === 0) {
             indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">No hay indicadores que coincidan con los filtros seleccionados</p>';
@@ -249,7 +248,7 @@ function renderizarDiagrama() {
             });
         }
     } else {
-        indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">Selecciona un programa para ver sus indicadores</p>';
+        indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">Haz clic en un programa para ver sus indicadores</p>';
     }
 }
 
@@ -268,6 +267,12 @@ function renderizarTarjetas() {
     const container = document.getElementById('cardsGrid');
     const indsFiltrados = obtenerIndicadoresFiltrados();
 
+    // Actualizar contador
+    const countElement = document.getElementById('cardsCount');
+    if (countElement) {
+        countElement.textContent = `${indsFiltrados.length} indicadores`;
+    }
+
     container.innerHTML = '';
 
     if (indsFiltrados.length === 0) {
@@ -275,22 +280,43 @@ function renderizarTarjetas() {
         return;
     }
 
+    // Agrupar por programa
+    const porPrograma = {};
     indsFiltrados.forEach(ind => {
-        const card = document.createElement('div');
-        card.className = 'indicador-card';
-        const tipoClass = ind.tipo.toLowerCase().replace(' ', '-');
-        
-        card.innerHTML = `
-            <div class="card-header">
-                <div class="card-code">${ind.codigo}</div>
-                <span class="card-tipo ${tipoClass}">${ind.tipo}</span>
+        if (!porPrograma[ind.programa]) {
+            porPrograma[ind.programa] = [];
+        }
+        porPrograma[ind.programa].push(ind);
+    });
+
+    // Renderizar por programa
+    Object.keys(porPrograma).sort().forEach(programa => {
+        const programaInds = porPrograma[programa];
+        const icono = programa.includes('I') ? '💫' : programa.includes('P') ? '🎯' : '✅';
+
+        // Crear tarjeta de programa
+        const programCard = document.createElement('div');
+        programCard.className = 'program-card';
+        programCard.innerHTML = `
+            <div class="program-icon">${icono}</div>
+            <div class="program-name">${programa}</div>
+            <div class="program-count">${programaInds.length} indicadores</div>
+            <div class="program-types">
+                ${[...new Set(programaInds.map(i => i.tipo))].map(tipo => {
+                    const tipoClass = tipo.toLowerCase().replace(' ', '-');
+                    return `<span class="type-badge ${tipoClass}">${tipo}</span>`;
+                }).join('')}
             </div>
-            <div class="card-nombre">${ind.nombre}</div>
-            <div class="card-programa">${ind.programa} • ${ind.depto}</div>
         `;
-        
-        card.addEventListener('click', () => abrirModal(ind));
-        container.appendChild(card);
+
+        programCard.addEventListener('click', () => {
+            // Mostrar el primer indicador del programa como ejemplo
+            if (programaInds.length > 0) {
+                abrirModal(programaInds[0]);
+            }
+        });
+
+        container.appendChild(programCard);
     });
 }
 
