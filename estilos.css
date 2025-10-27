@@ -391,6 +391,13 @@ body {
     font-size: 18px;
     font-weight: 700;
     color: var(--text-dark);
+    margin-bottom: 5px;
+}
+
+.program-department {
+    font-size: 13px;
+    color: var(--secondary);
+    font-weight: 600;
     margin-bottom: 10px;
 }
 

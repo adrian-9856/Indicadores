@@ -145,12 +145,19 @@ function detectarTipo(tiempo, criterio, nombre) {
 
 // ===== DETECTAR DEPARTAMENTO =====
 function detectarDepartamento(codigo) {
-    if (codigo.startsWith('IL')) return 'IL';
-    if (codigo.startsWith('AE.')) return 'AE';
-    if (codigo.startsWith('CEEX')) return 'CEEX';
-    if (codigo.startsWith('CCI')) return 'CCI';
-    if (codigo.startsWith('C.')) return 'Creamos';
-    if (codigo.startsWith('ME')) return 'ME';
+    // Convertir a mayúsculas para comparación
+    const codigoUpper = codigo.toUpperCase().trim();
+
+    if (codigoUpper.startsWith('IL')) return 'IL';
+    if (codigoUpper.startsWith('AE')) return 'AE';
+    if (codigoUpper.startsWith('CEEX')) return 'CEEX';
+    if (codigoUpper.startsWith('CCI')) return 'CCI';
+    if (codigoUpper.startsWith('ME')) return 'ME';
+    if (codigoUpper.startsWith('C.') || codigoUpper.startsWith('C-')) return 'Creamos';
+
+    // Detectar si es código de Creamos por patrón C.X.X
+    if (/^C\.\d+/.test(codigoUpper)) return 'Creamos';
+
     return 'Otros';
 }
 
@@ -333,7 +340,19 @@ function renderizarTarjetas() {
     // Renderizar por programa
     Object.keys(porPrograma).sort().forEach(programa => {
         const programaInds = porPrograma[programa];
+        const departamento = programaInds[0].depto; // Obtener departamento del primer indicador
         const icono = programa.includes('I') ? '💫' : programa.includes('P') ? '🎯' : '✅';
+
+        // Iconos por departamento
+        const iconoDepto = {
+            'Creamos': '🌟',
+            'IL': '💼',
+            'AE': '💚',
+            'CEEX': '📚',
+            'CCI': '👶',
+            'ME': '👩‍💼',
+            'Otros': '📋'
+        }[departamento] || '📋';
 
         // Crear tarjeta de programa
         const programCard = document.createElement('div');
@@ -341,6 +360,7 @@ function renderizarTarjetas() {
         programCard.innerHTML = `
             <div class="program-icon">${icono}</div>
             <div class="program-name">${programa}</div>
+            <div class="program-department">${iconoDepto} ${departamento}</div>
             <div class="program-count">${programaInds.length} indicadores</div>
             <div class="program-types">
                 ${[...new Set(programaInds.map(i => i.tipo))].map(tipo => {
