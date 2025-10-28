@@ -17,6 +17,9 @@
             </div>
             <div class="header-right">
                 <input type="text" id="searchInput" placeholder="🔍 Buscar indicador..." class="search-input">
+                <button id="themeToggle" class="theme-toggle" title="Cambiar tema">
+                    <span class="theme-icon">🌙</span>
+                </button>
             </div>
         </div>
     </header>
@@ -52,27 +55,27 @@
                 </div>
             </div>
 
-            <!-- FILTROS -->
+            <!-- FILTROS POR TIPO -->
             <div class="sidebar-card">
                 <h3 class="sidebar-title">🎯 Filtrar por Tipo</h3>
                 <div class="filter-group">
                     <label class="filter-item">
-                        <input type="checkbox" value="Proceso" class="filter-checkbox" checked>
-                        <span class="filter-icon">📊</span>
-                        <span class="filter-label">Proceso</span>
-                    </label>
-                    <label class="filter-item">
-                        <input type="checkbox" value="Resultado" class="filter-checkbox" checked>
-                        <span class="filter-icon">✅</span>
-                        <span class="filter-label">Resultado</span>
-                    </label>
-                    <label class="filter-item">
-                        <input type="checkbox" value="Impacto" class="filter-checkbox" checked>
+                        <input type="checkbox" value="Impacto" class="filter-checkbox filter-tipo" checked>
                         <span class="filter-icon">💫</span>
                         <span class="filter-label">Impacto</span>
                     </label>
                     <label class="filter-item">
-                        <input type="checkbox" value="No especificado" class="filter-checkbox" checked>
+                        <input type="checkbox" value="Resultado" class="filter-checkbox filter-tipo" checked>
+                        <span class="filter-icon">✅</span>
+                        <span class="filter-label">Resultado</span>
+                    </label>
+                    <label class="filter-item">
+                        <input type="checkbox" value="Proceso" class="filter-checkbox filter-tipo" checked>
+                        <span class="filter-icon">📊</span>
+                        <span class="filter-label">Proceso</span>
+                    </label>
+                    <label class="filter-item">
+                        <input type="checkbox" value="No especificado" class="filter-checkbox filter-tipo" checked>
                         <span class="filter-icon">❓</span>
                         <span class="filter-label">No especificado</span>
                     </label>
@@ -85,15 +88,11 @@
                 <div class="stats-grid">
                     <div class="stat-item">
                         <div class="stat-number" id="totalCount">0</div>
-                        <div class="stat-label">Total</div>
+                        <div class="stat-label">Total Indicadores</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number" id="creamosCount">0</div>
-                        <div class="stat-label">Creamos</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number" id="otrosCount">0</div>
-                        <div class="stat-label">Otros</div>
+                        <div class="stat-number" id="programasCount">0</div>
+                        <div class="stat-label">Programas</div>
                     </div>
                 </div>
             </div>
@@ -101,7 +100,14 @@
 
         <!-- CONTENT AREA -->
         <main class="content-area">
-            
+
+            <!-- BREADCRUMBS -->
+            <nav class="breadcrumbs" id="breadcrumbs">
+                <span class="breadcrumb-item active">🏠 Inicio</span>
+                <span class="breadcrumb-separator">›</span>
+                <span class="breadcrumb-item" id="breadcrumbView">Tarjetas</span>
+            </nav>
+
             <!-- VISTA TARJETAS -->
             <div class="view-content active" id="viewCards">
                 <div class="section-header">
@@ -119,7 +125,7 @@
                 </div>
                 <div class="diagram-wrapper">
                     <div class="diagram-row">
-                        <div class="diagram-node root-node">
+                        <div class="diagram-node root-node" id="rootNode">
                             <div class="node-icon">🌟</div>
                             <div class="node-title">CREAMOS</div>
                             <div class="node-count" id="rootCount">0</div>
@@ -152,39 +158,172 @@
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-container">
             <button class="modal-close" id="modalClose">&times;</button>
-            
+
             <div class="modal-header">
                 <h2 id="modalTitle" class="modal-title"></h2>
                 <div class="modal-tags">
                     <span class="modal-tag tag-code" id="modalCode"></span>
                     <span class="modal-tag tag-type" id="modalType"></span>
+                    <span class="modal-tag tag-dept" id="modalDeptTag"></span>
                 </div>
             </div>
 
+            <!-- MODAL ACTIONS -->
+            <div class="modal-actions">
+                <button class="btn-action" id="btnExportPDF" title="Exportar a PDF">
+                    📄 PDF
+                </button>
+                <button class="btn-action" id="btnExportExcel" title="Exportar a Excel">
+                    📊 Excel
+                </button>
+                <button class="btn-action" id="btnPrint" title="Imprimir">
+                    🖨️ Imprimir
+                </button>
+            </div>
+
+            <!-- MODAL TABS -->
+            <div class="modal-tabs">
+                <button class="modal-tab active" data-tab="info">📋 Información</button>
+                <button class="modal-tab" data-tab="measurement">📏 Medición</button>
+                <button class="modal-tab" data-tab="guidance">📖 Guía</button>
+            </div>
+
             <div class="modal-body">
-                <div class="modal-field">
-                    <label>Código</label>
-                    <p id="modalCodigo"></p>
+                <!-- TAB: INFORMACIÓN -->
+                <div class="modal-tab-content active" id="tabInfo">
+                    <div class="modal-field">
+                        <label>Código</label>
+                        <p id="modalCodigo"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>Criterio</label>
+                        <p id="modalCriterio"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>Descripción</label>
+                        <p id="modalDesc"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>Tipo de Indicador</label>
+                        <p id="modalTipo"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>Departamento</label>
+                        <p id="modalDepto"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>Programa</label>
+                        <p id="modalPrograma"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>Nivel de Medición</label>
+                        <p id="modalNivel"></p>
+                    </div>
                 </div>
-                <div class="modal-field">
-                    <label>Criterio</label>
-                    <p id="modalCriterio"></p>
+
+                <!-- TAB: MEDICIÓN -->
+                <div class="modal-tab-content" id="tabMeasurement">
+                    <div class="modal-field">
+                        <label>🧮 Fórmula de Cálculo</label>
+                        <div class="formula-box" id="modalFormula">
+                            <p>% = (Numerador / Denominador) × 100</p>
+                        </div>
+                    </div>
+                    <div class="modal-field">
+                        <label>📊 Desagregación Recomendada</label>
+                        <p id="modalDesagregacion">Por sexo, edad, ubicación geográfica</p>
+                    </div>
+                    <div class="modal-field">
+                        <label>📅 Periodicidad de Medición</label>
+                        <p id="modalPeriodicidad"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>🎯 Meta/Objetivo</label>
+                        <p id="modalMeta">Definir según contexto del proyecto</p>
+                    </div>
                 </div>
-                <div class="modal-field">
-                    <label>Descripción</label>
-                    <p id="modalDesc"></p>
+
+                <!-- TAB: GUÍA -->
+                <div class="modal-tab-content" id="tabGuidance">
+                    <div class="modal-field">
+                        <label>📝 Guía de Recolección de Datos</label>
+                        <div class="guidance-box">
+                            <ol id="modalGuia">
+                                <li>Identificar la fuente de datos apropiada</li>
+                                <li>Definir el método de recolección</li>
+                                <li>Establecer el tamaño de muestra necesario</li>
+                                <li>Recolectar datos de manera sistemática</li>
+                                <li>Verificar la calidad de los datos</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="modal-field">
+                        <label>✅ Fuentes de Verificación</label>
+                        <p id="modalFuentes">Registros administrativos, encuestas, entrevistas, observación directa</p>
+                    </div>
+                    <div class="modal-field">
+                        <label>💡 Ejemplo Práctico</label>
+                        <div class="example-box" id="modalEjemplo">
+                            <p>Si 75 de 100 participantes completaron el programa, el indicador sería: (75/100) × 100 = 75%</p>
+                        </div>
+                    </div>
+                    <div class="modal-field">
+                        <label>⚠️ Consideraciones</label>
+                        <p id="modalConsideraciones">Asegurar que los datos sean representativos y verificables</p>
+                    </div>
                 </div>
-                <div class="modal-field">
-                    <label>Tipo</label>
-                    <p id="modalTipo"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATIONS -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p class="loading-text">Cargando datos...</p>
+        </div>
+    </div>
+
+    <!-- KEYBOARD SHORTCUTS HELP -->
+    <div id="shortcutsModal" class="shortcuts-modal">
+        <div class="shortcuts-content">
+            <button class="shortcuts-close" id="shortcutsClose">&times;</button>
+            <h3>⌨️ Atajos de Teclado</h3>
+            <div class="shortcuts-grid">
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>K</kbd>
+                    <span>Búsqueda rápida</span>
                 </div>
-                <div class="modal-field">
-                    <label>Departamento</label>
-                    <p id="modalDepto"></p>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>1</kbd>
+                    <span>Vista Tarjetas</span>
                 </div>
-                <div class="modal-field">
-                    <label>Programa</label>
-                    <p id="modalPrograma"></p>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>2</kbd>
+                    <span>Vista Diagrama</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>3</kbd>
+                    <span>Vista Lista</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>F</kbd>
+                    <span>Ver Favoritos</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>D</kbd>
+                    <span>Modo Oscuro</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Esc</kbd>
+                    <span>Cerrar Modal</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>?</kbd>
+                    <span>Mostrar Ayuda</span>
                 </div>
             </div>
         </div>

@@ -9,22 +9,29 @@ const btnCargar = document.getElementById('btnCargar');
 const searchInput = document.getElementById('searchInput');
 const modalOverlay = document.getElementById('modalOverlay');
 const modalClose = document.getElementById('modalClose');
+const themeToggle = document.getElementById('themeToggle');
+const loadingOverlay = document.getElementById('loadingOverlay');
+const toastContainer = document.getElementById('toastContainer');
+const shortcutsModal = document.getElementById('shortcutsModal');
+const shortcutsClose = document.getElementById('shortcutsClose');
 
 // ===== CARGAR DATOS =====
 async function cargarDatos() {
     const url = urlSheet.value.trim();
     if (!url) {
-        alert('⚠️ Por favor pega la URL de Google Sheets');
+        showToast('Advertencia', 'Por favor pega la URL de Google Sheets', 'warning');
         return;
     }
 
     const sheetID = url.includes('/d/') ? url.split('/d/')[1].split('/')[0] : null;
     if (!sheetID) {
-        alert('❌ URL inválida. Asegúrate de copiar la URL completa.');
+        showToast('Error', 'URL inválida. Asegúrate de copiar la URL completa', 'error');
         return;
     }
 
     try {
+        showLoading('Cargando datos desde Google Sheets...');
+
         const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetID}/export?format=csv`;
         const response = await fetch(csvUrl);
         const csv = await response.text();
@@ -40,7 +47,7 @@ async function cargarDatos() {
             const idx = headers.findIndex(h => h.toLowerCase().includes(nombre.toLowerCase()));
             return idx >= 0 ? idx : -1;
         };
-        
+
         const idxCodigo = getColIndex('código');
         const idxCriterio = getColIndex('criterio');
         const idxIndicador = getColIndex('indicador');
@@ -53,7 +60,7 @@ async function cargarDatos() {
             if (!linea) continue;
 
             const cols = parseCSVLine(linea);
-            
+
             const codigo = getColValue(cols, idxCodigo);
             const criterio = getColValue(cols, idxCriterio);
             const nombre = getColValue(cols, idxIndicador);
@@ -73,6 +80,9 @@ async function cargarDatos() {
             // Extraer programa del código
             const programa = codigo.includes('.') ? codigo.split('.')[0] + '.' + codigo.split('.')[1].charAt(0) : codigo.split('.')[0];
 
+            // Extraer nombre del programa desde el criterio
+            const nombrePrograma = extraerNombrePrograma(criterio);
+
             indicadores.push({
                 codigo,
                 criterio,
@@ -82,25 +92,151 @@ async function cargarDatos() {
                 depto,
                 nivel,
                 tiempo,
-                programa
+                programa,
+                nombrePrograma
             });
         }
 
+        hideLoading();
+
         if (indicadores.length === 0) {
-            alert('⚠️ No se encontraron indicadores válidos en el archivo');
+            showToast('Advertencia', 'No se encontraron indicadores válidos en el archivo', 'warning');
             return;
         }
 
         renderizarTodo();
         localStorage.setItem('urlSheet', url);
         document.getElementById('emptyState').style.display = 'none';
-        
-        alert(`✅ ${indicadores.length} indicadores cargados exitosamente`);
+
+        showToast('Éxito', `${indicadores.length} indicadores cargados correctamente`, 'success');
 
     } catch (error) {
+        hideLoading();
         console.error('Error completo:', error);
-        alert('❌ Error al cargar datos: ' + error.message);
+        showToast('Error', `No se pudieron cargar los datos: ${error.message}`, 'error');
     }
+}
+
+// ===== UTILIDADES UI =====
+
+// Dark Mode
+function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+
+    // Actualizar icono
+    const icon = themeToggle.querySelector('.theme-icon');
+    icon.textContent = isDark ? '☀️' : '🌙';
+
+    // Mostrar toast
+    showToast('Tema actualizado', `Modo ${isDark ? 'oscuro' : 'claro'} activado`, 'info');
+}
+
+// Toast Notifications
+function showToast(title, message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+    };
+
+    toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || 'ℹ️'}</div>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close">&times;</button>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    // Animar entrada
+    setTimeout(() => toast.classList.add('show'), 10);
+
+    // Configurar cierre
+    const closeBtn = toast.querySelector('.toast-close');
+    closeBtn.addEventListener('click', () => removeToast(toast));
+
+    // Auto-cerrar después de 5 segundos
+    setTimeout(() => removeToast(toast), 5000);
+}
+
+function removeToast(toast) {
+    toast.classList.remove('show');
+    toast.classList.add('hide');
+    setTimeout(() => toast.remove(), 300);
+}
+
+// Loading Overlay
+function showLoading(text = 'Cargando datos...') {
+    loadingOverlay.querySelector('.loading-text').textContent = text;
+    loadingOverlay.classList.add('active');
+}
+
+function hideLoading() {
+    loadingOverlay.classList.remove('active');
+}
+
+// Keyboard Shortcuts
+function initKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Ctrl + K: Búsqueda rápida
+        if (e.ctrlKey && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+
+        // Ctrl + 1: Vista Tarjetas
+        if (e.ctrlKey && e.key === '1') {
+            e.preventDefault();
+            cambiarVista('cards');
+        }
+
+        // Ctrl + 2: Vista Diagrama
+        if (e.ctrlKey && e.key === '2') {
+            e.preventDefault();
+            cambiarVista('diagram');
+        }
+
+        // Ctrl + 3: Vista Lista
+        if (e.ctrlKey && e.key === '3') {
+            e.preventDefault();
+            cambiarVista('list');
+        }
+
+        // Ctrl + D: Modo Oscuro
+        if (e.ctrlKey && e.key === 'd') {
+            e.preventDefault();
+            toggleTheme();
+        }
+
+        // Esc: Cerrar Modal
+        if (e.key === 'Escape') {
+            if (modalOverlay.classList.contains('active')) {
+                cerrarModal();
+            }
+            if (shortcutsModal.classList.contains('active')) {
+                toggleShortcutsModal();
+            }
+        }
+
+        // ?: Mostrar Ayuda
+        if (e.key === '?' && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+            e.preventDefault();
+            toggleShortcutsModal();
+        }
+    });
+}
+
+function toggleShortcutsModal() {
+    shortcutsModal.classList.toggle('active');
 }
 
 // ===== OBTENER VALOR DE COLUMNA =====
@@ -145,23 +281,50 @@ function detectarTipo(tiempo, criterio, nombre) {
 
 // ===== DETECTAR DEPARTAMENTO =====
 function detectarDepartamento(codigo) {
-    if (codigo.startsWith('IL')) return 'IL';
-    if (codigo.startsWith('AE.')) return 'AE';
-    if (codigo.startsWith('CEEX')) return 'CEEX';
-    if (codigo.startsWith('CCI')) return 'CCI';
-    if (codigo.startsWith('C.')) return 'Creamos';
-    if (codigo.startsWith('ME')) return 'ME';
+    // Convertir a mayúsculas para comparación
+    const codigoUpper = codigo.toUpperCase().trim();
+
+    if (codigoUpper.startsWith('IL')) return 'IL';
+    if (codigoUpper.startsWith('AE')) return 'AE';
+    if (codigoUpper.startsWith('CEEX')) return 'CEEX';
+    if (codigoUpper.startsWith('CCI')) return 'CCI';
+    if (codigoUpper.startsWith('ME')) return 'ME';
+    if (codigoUpper.startsWith('C.') || codigoUpper.startsWith('C-')) return 'Creamos';
+
+    // Detectar si es código de Creamos por patrón C.X.X
+    if (/^C\.\d+/.test(codigoUpper)) return 'Creamos';
+
     return 'Otros';
+}
+
+// ===== EXTRAER NOMBRE DEL PROGRAMA =====
+function extraerNombrePrograma(criterio) {
+    if (!criterio) return 'Sin programa';
+
+    // Buscar patrones comunes en criterios
+    const criterioLower = criterio.toLowerCase();
+
+    // Mapeo de palabras clave a nombres de programas
+    if (criterioLower.includes('educación') || criterioLower.includes('educacion')) return 'Educación';
+    if (criterioLower.includes('apoyo emocional') || criterioLower.includes('emocional')) return 'Apoyo Emocional';
+    if (criterioLower.includes('empoderamiento') || criterioLower.includes('empoderan')) return 'Empoderamiento';
+    if (criterioLower.includes('protección') || criterioLower.includes('proteccion')) return 'Protección';
+    if (criterioLower.includes('salud')) return 'Salud';
+    if (criterioLower.includes('nutrición') || criterioLower.includes('nutricion')) return 'Nutrición';
+    if (criterioLower.includes('agua') || criterioLower.includes('saneamiento')) return 'Agua y Saneamiento';
+    if (criterioLower.includes('medios de vida') || criterioLower.includes('mevida')) return 'Medios de Vida';
+    if (criterioLower.includes('incidencia') || criterioLower.includes('advocacy')) return 'Incidencia';
+
+    // Si no coincide con ninguno, usar el criterio como está
+    return criterio.split('-')[0].trim();
 }
 
 // ===== ACTUALIZAR ESTADÍSTICAS =====
 function actualizarEstadisticas() {
-    const creamosIndicadores = indicadores.filter(i => i.depto === 'Creamos');
-    const otrosIndicadores = indicadores.filter(i => i.depto !== 'Creamos');
+    const programasUnicos = [...new Set(indicadores.map(i => i.programa))];
 
     document.getElementById('totalCount').textContent = indicadores.length;
-    document.getElementById('creamosCount').textContent = creamosIndicadores.length;
-    document.getElementById('otrosCount').textContent = otrosIndicadores.length;
+    document.getElementById('programasCount').textContent = programasUnicos.length;
 }
 
 // ===== RENDERIZAR TODO =====
@@ -187,53 +350,28 @@ function renderizarVista() {
 
 // ===== RENDERIZAR VISTA DIAGRAMA =====
 function renderizarDiagrama() {
-    const creamosIndicadores = indicadores.filter(i => i.depto === 'Creamos');
     const programasLevel = document.getElementById('programasRow');
     const indicadoresLevel = document.getElementById('indicadoresRow');
+    const rootNode = document.getElementById('rootNode');
 
-    document.getElementById('rootCount').textContent = `${creamosIndicadores.length} indicadores`;
+    // Contar todos los indicadores filtrados
+    const indsFiltrados = obtenerIndicadoresFiltrados();
+    document.getElementById('rootCount').textContent = `${indsFiltrados.length}/${indicadores.length} indicadores`;
 
     programasLevel.innerHTML = '';
     indicadoresLevel.innerHTML = '';
 
-    // Obtener programas únicos de Creamos
-    const programasUnicos = [...new Set(creamosIndicadores.map(i => i.programa))].sort();
-
-    console.log('Programas únicos en diagrama:', programasUnicos);
-
-    if (programasUnicos.length === 0) {
-        programasLevel.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">No hay programas de Creamos</p>';
-        return;
+    // Actualizar clase selected del nodo raíz
+    if (programaSeleccionado === 'CREAMOS') {
+        rootNode.classList.add('selected');
+    } else {
+        rootNode.classList.remove('selected');
     }
 
-    programasUnicos.forEach(prog => {
-        // Filtrar por programa Y por filtros de tipo
-        const indsPrograma = creamosIndicadores.filter(i => i.programa === prog);
-        const indsFiltrados = obtenerIndicadoresFiltrados().filter(i => i.programa === prog && i.depto === 'Creamos');
-        
-        const icono = prog.includes('I') ? '💫' : prog.includes('P') ? '🎯' : '✅';
-        
-        const node = document.createElement('div');
-        node.className = `diagram-node programa-node ${programaSeleccionado === prog ? 'selected' : ''}`;
-        node.dataset.programa = prog;
-        node.innerHTML = `
-            <div class="node-icon">${icono}</div>
-            <div class="node-label">${prog}</div>
-            <div class="node-count">${indsFiltrados.length}/${indsPrograma.length}</div>
-        `;
-        node.addEventListener('click', () => seleccionarPrograma(prog));
-        programasLevel.appendChild(node);
-    });
-
-    // Mostrar indicadores del programa seleccionado
-    if (programaSeleccionado) {
-        const indsFiltrados = obtenerIndicadoresFiltrados()
-            .filter(i => i.programa === programaSeleccionado && i.depto === 'Creamos');
-
-        console.log('Indicadores filtrados para', programaSeleccionado, ':', indsFiltrados.length);
-
+    // CASO 1: Se seleccionó CREAMOS - mostrar TODOS los indicadores
+    if (programaSeleccionado === 'CREAMOS') {
         if (indsFiltrados.length === 0) {
-            indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">No hay indicadores que coincidan con los filtros seleccionados</p>';
+            indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-secondary);">No hay indicadores que coincidan con los filtros seleccionados</p>';
         } else {
             indsFiltrados.forEach(ind => {
                 const node = document.createElement('div');
@@ -244,22 +382,84 @@ function renderizarDiagrama() {
                     <div class="node-label">${nombreCorto}</div>
                     <div class="node-type">${ind.tipo}</div>
                 `;
-                node.addEventListener('click', () => abrirModal(ind));
+                node.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    abrirModal(ind);
+                });
                 indicadoresLevel.appendChild(node);
             });
         }
-    } else {
-        indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">Selecciona un programa para ver sus indicadores</p>';
+        return;
     }
+
+    // CASO 2: Se seleccionó un programa específico - mostrar sus indicadores
+    if (programaSeleccionado) {
+        const indsProgramaFiltrados = indsFiltrados.filter(i => i.nombrePrograma === programaSeleccionado);
+
+        if (indsProgramaFiltrados.length === 0) {
+            indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-secondary);">No hay indicadores que coincidan con los filtros seleccionados</p>';
+        } else {
+            indsProgramaFiltrados.forEach(ind => {
+                const node = document.createElement('div');
+                node.className = `diagram-node indicador-node tipo-${ind.tipo.toLowerCase().replace(' ', '-')}`;
+                const nombreCorto = ind.nombre.length > 50 ? ind.nombre.substring(0, 50) + '...' : ind.nombre;
+                node.innerHTML = `
+                    <div class="node-code">${ind.codigo}</div>
+                    <div class="node-label">${nombreCorto}</div>
+                    <div class="node-type">${ind.tipo}</div>
+                `;
+                node.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    abrirModal(ind);
+                });
+                indicadoresLevel.appendChild(node);
+            });
+        }
+        return;
+    }
+
+    // CASO 3: Por defecto - mostrar NOMBRES DE PROGRAMAS
+    const nombresUnicos = [...new Set(indicadores.map(i => i.nombrePrograma))].sort();
+
+    if (nombresUnicos.length === 0) {
+        programasLevel.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-secondary);">No hay programas disponibles</p>';
+        return;
+    }
+
+    // Iconos por tipo de programa
+    const iconosPorPrograma = {
+        'Educación': '📚',
+        'Apoyo Emocional': '💙',
+        'Empoderamiento': '💪',
+        'Protección': '🛡️',
+        'Salud': '🏥',
+        'Nutrición': '🍎',
+        'Agua y Saneamiento': '💧',
+        'Medios de Vida': '💼',
+        'Incidencia': '📣'
+    };
+
+    nombresUnicos.forEach(nombreProg => {
+        const indsPrograma = indicadores.filter(i => i.nombrePrograma === nombreProg);
+        const indsProgramaFiltrados = indsFiltrados.filter(i => i.nombrePrograma === nombreProg);
+        const icono = iconosPorPrograma[nombreProg] || '✨';
+
+        const node = document.createElement('div');
+        node.className = 'diagram-node programa-node';
+        node.dataset.programa = nombreProg;
+        node.innerHTML = `
+            <div class="node-icon">${icono}</div>
+            <div class="node-label">${nombreProg}</div>
+            <div class="node-count">${indsProgramaFiltrados.length}/${indsPrograma.length} indicadores</div>
+        `;
+        node.addEventListener('click', () => seleccionarPrograma(nombreProg));
+        programasLevel.appendChild(node);
+    });
 }
 
 // ===== SELECCIONAR PROGRAMA EN DIAGRAMA =====
 function seleccionarPrograma(programa) {
-    if (programaSeleccionado === programa) {
-        programaSeleccionado = null;
-    } else {
-        programaSeleccionado = programa;
-    }
+    programaSeleccionado = programa;
     renderizarDiagrama();
 }
 
@@ -268,29 +468,42 @@ function renderizarTarjetas() {
     const container = document.getElementById('cardsGrid');
     const indsFiltrados = obtenerIndicadoresFiltrados();
 
+    // Actualizar contador
+    const countElement = document.getElementById('cardsCount');
+    if (countElement) {
+        countElement.textContent = `${indsFiltrados.length} indicadores`;
+    }
+
     container.innerHTML = '';
 
     if (indsFiltrados.length === 0) {
-        container.innerHTML = '<p style="text-align:center;padding:40px;color:#999;">No hay indicadores que coincidan con los filtros</p>';
+        container.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-secondary);">No hay indicadores que coincidan con los filtros</p>';
         return;
     }
 
+    // Renderizar cada indicador individual
     indsFiltrados.forEach(ind => {
-        const card = document.createElement('div');
-        card.className = 'indicador-card';
+        const icono = ind.programa.includes('I') ? '💫' : ind.programa.includes('P') ? '🎯' : '✅';
         const tipoClass = ind.tipo.toLowerCase().replace(' ', '-');
-        
-        card.innerHTML = `
-            <div class="card-header">
-                <div class="card-code">${ind.codigo}</div>
-                <span class="card-tipo ${tipoClass}">${ind.tipo}</span>
+
+        // Crear tarjeta de indicador
+        const indicadorCard = document.createElement('div');
+        indicadorCard.className = 'program-card';
+        indicadorCard.innerHTML = `
+            <div class="program-icon">${icono}</div>
+            <div class="program-name">${ind.codigo}</div>
+            <div class="program-department">${ind.nombre}</div>
+            <div class="program-count">Programa: ${ind.programa}</div>
+            <div class="program-types">
+                <span class="type-badge ${tipoClass}">${ind.tipo}</span>
             </div>
-            <div class="card-nombre">${ind.nombre}</div>
-            <div class="card-programa">${ind.programa} • ${ind.depto}</div>
         `;
-        
-        card.addEventListener('click', () => abrirModal(ind));
-        container.appendChild(card);
+
+        indicadorCard.addEventListener('click', () => {
+            abrirModal(ind);
+        });
+
+        container.appendChild(indicadorCard);
     });
 }
 
@@ -299,76 +512,24 @@ function renderizarLista() {
     const container = document.getElementById('listAccordion');
     container.innerHTML = '';
 
-    const creamosIndicadores = indicadores.filter(i => i.depto === 'Creamos');
-    const otrosDepts = indicadores.filter(i => i.depto !== 'Creamos');
-
-    // ===== CREAMOS =====
-    if (creamosIndicadores.length > 0) {
-        const creamosAccordion = crearAccordion('🌟', 'Creamos', creamosIndicadores.length, true);
-        
-        // Obtener programas únicos de Creamos
-        const programasCreamos = [...new Set(creamosIndicadores.map(i => i.programa))].sort();
-        
-        programasCreamos.forEach(prog => {
-            const progsInds = creamosIndicadores.filter(i => i.programa === prog);
-            const programaDiv = crearPrograma(prog, progsInds);
-            creamosAccordion.content.appendChild(programaDiv);
-        });
-        
-        container.appendChild(creamosAccordion.element);
+    if (indicadores.length === 0) {
+        container.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-secondary);">No hay indicadores cargados</p>';
+        return;
     }
 
-    // ===== OTROS DEPARTAMENTOS =====
-    if (otrosDepts.length > 0) {
-        const otrosAccordion = crearAccordion('📋', 'Otros Departamentos', otrosDepts.length, false);
-        
-        const deptos = [...new Set(otrosDepts.map(i => i.depto))].sort();
-        
-        deptos.forEach(depto => {
-            const deptInds = otrosDepts.filter(i => i.depto === depto);
-            const icono = { 
-                'IL': '💼', 
-                'AE': '💚', 
-                'CEEX': '📚', 
-                'CCI': '👶', 
-                'ME': '👩‍💼' 
-            }[depto] || '📋';
-            
-            const programaDiv = crearPrograma(`${icono} ${depto}`, deptInds);
-            otrosAccordion.content.appendChild(programaDiv);
-        });
-        
-        container.appendChild(otrosAccordion.element);
-    }
+    // Obtener todos los programas únicos
+    const programasUnicos = [...new Set(indicadores.map(i => i.programa))].sort();
+
+    // Crear un accordion por cada programa
+    programasUnicos.forEach(prog => {
+        const progsInds = indicadores.filter(i => i.programa === prog);
+        const icono = prog.includes('I') ? '💫' : prog.includes('P') ? '🎯' : '✅';
+
+        const programaDiv = crearPrograma(`${icono} ${prog}`, progsInds);
+        container.appendChild(programaDiv);
+    });
 
     aplicarFiltros();
-}
-
-// ===== CREAR ACCORDION =====
-function crearAccordion(icono, titulo, count, abierto = false) {
-    const accordionItem = document.createElement('div');
-    accordionItem.className = `accordion-item ${abierto ? 'open' : ''}`;
-    
-    const header = document.createElement('button');
-    header.className = 'accordion-header';
-    header.innerHTML = `
-        <span class="accordion-icon">${icono}</span>
-        <span class="accordion-title">${titulo}</span>
-        <span class="accordion-count">${count}</span>
-        <span class="accordion-toggle">▼</span>
-    `;
-    
-    const content = document.createElement('div');
-    content.className = 'accordion-content';
-    
-    header.addEventListener('click', () => {
-        accordionItem.classList.toggle('open');
-    });
-    
-    accordionItem.appendChild(header);
-    accordionItem.appendChild(content);
-    
-    return { element: accordionItem, content };
 }
 
 // ===== CREAR PROGRAMA =====
@@ -412,15 +573,15 @@ function renderItems(items) {
 // ===== OBTENER INDICADORES FILTRADOS =====
 function obtenerIndicadoresFiltrados() {
     const texto = searchInput.value.toLowerCase();
-    const filtros = document.querySelectorAll('.filter-checkbox:checked');
-    const tiposFiltrados = Array.from(filtros).map(f => f.value);
+    const filtrosTipo = document.querySelectorAll('.filter-tipo:checked');
+    const tiposFiltrados = Array.from(filtrosTipo).map(f => f.value);
 
     return indicadores.filter(ind => {
-        const coincideTexto = 
+        const coincideTexto =
             ind.codigo.toLowerCase().includes(texto) ||
             ind.nombre.toLowerCase().includes(texto) ||
             ind.criterio.toLowerCase().includes(texto);
-        
+
         const coincideTipo = tiposFiltrados.includes(ind.tipo);
 
         return coincideTexto && coincideTipo;
@@ -455,15 +616,30 @@ function setupIndicadorClicks() {
 
 // ===== ABRIR MODAL =====
 function abrirModal(ind) {
+    // Guardar indicador actual para exportación
+    window.indicadorActual = ind;
+
+    // Tab Información
     document.getElementById('modalTitle').textContent = ind.nombre;
     document.getElementById('modalCode').textContent = ind.codigo;
     document.getElementById('modalType').textContent = ind.tipo;
+    document.getElementById('modalDeptTag').textContent = ind.depto;
     document.getElementById('modalCodigo').textContent = ind.codigo;
-    document.getElementById('modalCriterio').textContent = ind.criterio;
-    document.getElementById('modalDesc').textContent = ind.desc || 'Sin descripción';
+    document.getElementById('modalCriterio').textContent = ind.criterio || 'No especificado';
+    document.getElementById('modalDesc').textContent = ind.desc || 'Sin descripción disponible';
     document.getElementById('modalTipo').textContent = ind.tipo;
     document.getElementById('modalDepto').textContent = ind.depto;
     document.getElementById('modalPrograma').textContent = ind.programa;
+    document.getElementById('modalNivel').textContent = ind.nivel || 'No especificado';
+
+    // Tab Medición
+    document.getElementById('modalPeriodicidad').textContent = ind.tiempo || 'No especificado';
+
+    // Resetear a la primera tab
+    document.querySelectorAll('.modal-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.modal-tab-content').forEach(content => content.classList.remove('active'));
+    document.querySelector('.modal-tab[data-tab="info"]').classList.add('active');
+    document.getElementById('tabInfo').classList.add('active');
 
     modalOverlay.classList.add('active');
 }
@@ -471,6 +647,178 @@ function abrirModal(ind) {
 // ===== CERRAR MODAL =====
 function cerrarModal() {
     modalOverlay.classList.remove('active');
+}
+
+// ===== CAMBIAR TAB MODAL =====
+function cambiarTabModal(tabName) {
+    document.querySelectorAll('.modal-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.modal-tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+
+    document.querySelector(`.modal-tab[data-tab="${tabName}"]`).classList.add('active');
+    document.getElementById(`tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.add('active');
+}
+
+// ===== EXPORTAR A PDF =====
+function exportarPDF() {
+    const ind = window.indicadorActual;
+    if (!ind) return;
+
+    // Crear contenido HTML para imprimir
+    const contenido = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Indicador ${ind.codigo}</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.6; }
+                h1 { color: #2C5AA0; border-bottom: 3px solid #FF6B35; padding-bottom: 10px; }
+                .header { background: #F8F9FA; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+                .tag { display: inline-block; padding: 5px 15px; border-radius: 20px; margin-right: 10px; font-weight: bold; font-size: 12px; }
+                .tag-code { background: #FF6B35; color: white; }
+                .tag-type { background: #27AE60; color: white; }
+                .tag-dept { background: #2C5AA0; color: white; }
+                .section { margin-bottom: 30px; }
+                .section-title { color: #2C5AA0; font-size: 18px; font-weight: bold; margin-bottom: 10px; border-left: 4px solid #FF6B35; padding-left: 10px; }
+                .field { margin-bottom: 15px; }
+                .field-label { font-weight: bold; color: #5A6C7D; font-size: 13px; text-transform: uppercase; }
+                .field-value { margin-top: 5px; color: #2C3E50; }
+                .formula { background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%); color: white; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; }
+                .guidance ol { padding-left: 20px; }
+                .guidance li { margin-bottom: 8px; }
+            </style>
+        </head>
+        <body>
+            <h1>${ind.nombre}</h1>
+            <div class="header">
+                <span class="tag tag-code">${ind.codigo}</span>
+                <span class="tag tag-type">${ind.tipo}</span>
+                <span class="tag tag-dept">${ind.depto}</span>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📋 Información General</div>
+                <div class="field">
+                    <div class="field-label">Código</div>
+                    <div class="field-value">${ind.codigo}</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Criterio</div>
+                    <div class="field-value">${ind.criterio || 'No especificado'}</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Descripción</div>
+                    <div class="field-value">${ind.desc || 'Sin descripción disponible'}</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Programa</div>
+                    <div class="field-value">${ind.programa}</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Nivel de Medición</div>
+                    <div class="field-value">${ind.nivel || 'No especificado'}</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📏 Medición</div>
+                <div class="field">
+                    <div class="field-label">Fórmula de Cálculo</div>
+                    <div class="formula">% = (Numerador / Denominador) × 100</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Periodicidad</div>
+                    <div class="field-value">${ind.tiempo || 'No especificado'}</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Desagregación Recomendada</div>
+                    <div class="field-value">Por sexo, edad, ubicación geográfica</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📖 Guía de Recolección</div>
+                <div class="guidance">
+                    <ol>
+                        <li>Identificar la fuente de datos apropiada</li>
+                        <li>Definir el método de recolección</li>
+                        <li>Establecer el tamaño de muestra necesario</li>
+                        <li>Recolectar datos de manera sistemática</li>
+                        <li>Verificar la calidad de los datos</li>
+                    </ol>
+                </div>
+                <div class="field">
+                    <div class="field-label">Fuentes de Verificación</div>
+                    <div class="field-value">Registros administrativos, encuestas, entrevistas, observación directa</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 50px; padding-top: 20px; border-top: 2px solid #E1E8ED; text-align: center; color: #95A5A6; font-size: 12px;">
+                Documento generado por Sistema de Indicadores - Creamos
+            </div>
+        </body>
+        </html>
+    `;
+
+    // Abrir ventana de impresión
+    const ventana = window.open('', '', 'width=800,height=600');
+    ventana.document.write(contenido);
+    ventana.document.close();
+    ventana.print();
+}
+
+// ===== EXPORTAR A EXCEL =====
+function exportarExcel() {
+    const ind = window.indicadorActual;
+    if (!ind) return;
+
+    // Crear contenido CSV
+    const csv = [
+        ['Campo', 'Valor'],
+        ['Código', ind.codigo],
+        ['Nombre', ind.nombre],
+        ['Criterio', ind.criterio || ''],
+        ['Descripción', ind.desc || ''],
+        ['Tipo', ind.tipo],
+        ['Departamento', ind.depto],
+        ['Programa', ind.programa],
+        ['Nivel', ind.nivel || ''],
+        ['Periodicidad', ind.tiempo || ''],
+        [''],
+        ['Fórmula', '% = (Numerador / Denominador) × 100'],
+        ['Desagregación', 'Por sexo, edad, ubicación geográfica'],
+        ['Fuentes de Verificación', 'Registros administrativos, encuestas, entrevistas, observación directa']
+    ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+
+    // Crear y descargar archivo
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Indicador_${ind.codigo}.csv`;
+    link.click();
+}
+
+// ===== IMPRIMIR INDICADOR =====
+function imprimirIndicador() {
+    exportarPDF();
+}
+
+// ===== ACTUALIZAR BREADCRUMBS =====
+function actualizarBreadcrumbs() {
+    const viewNames = {
+        'cards': '📇 Tarjetas',
+        'diagram': '🔷 Diagrama',
+        'list': '📋 Lista'
+    };
+
+    const breadcrumbView = document.getElementById('breadcrumbView');
+    if (breadcrumbView) {
+        breadcrumbView.textContent = viewNames[vistaActual] || 'Vista';
+    }
 }
 
 // ===== CAMBIAR VISTA =====
@@ -497,6 +845,9 @@ function cambiarVista(vista) {
 
     document.getElementById(viewMap[vista]).classList.add('active');
 
+    // Actualizar breadcrumbs
+    actualizarBreadcrumbs();
+
     if (indicadores.length > 0) {
         renderizarVista();
     }
@@ -518,7 +869,7 @@ modalOverlay.addEventListener('click', (e) => {
     if (e.target === modalOverlay) cerrarModal();
 });
 
-document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+document.querySelectorAll('.filter-tipo').forEach(checkbox => {
     checkbox.addEventListener('change', () => {
         if (vistaActual === 'list') {
             aplicarFiltros();
@@ -528,16 +879,70 @@ document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
     });
 });
 
+// Event listener para el nodo raíz (CREAMOS)
+const rootNode = document.getElementById('rootNode');
+if (rootNode) {
+    rootNode.addEventListener('click', () => {
+        if (programaSeleccionado === 'CREAMOS') {
+            // Si ya está seleccionado, deseleccionar
+            programaSeleccionado = null;
+            rootNode.classList.remove('selected');
+        } else {
+            // Seleccionar CREAMOS
+            programaSeleccionado = 'CREAMOS';
+            rootNode.classList.add('selected');
+        }
+        renderizarDiagrama();
+    });
+}
+
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         cambiarVista(btn.dataset.view);
     });
 });
 
+// Event listeners para tabs del modal
+document.querySelectorAll('.modal-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        cambiarTabModal(tab.dataset.tab);
+    });
+});
+
+// Event listeners para botones de exportación
+document.getElementById('btnExportPDF').addEventListener('click', exportarPDF);
+document.getElementById('btnExportExcel').addEventListener('click', exportarExcel);
+document.getElementById('btnPrint').addEventListener('click', imprimirIndicador);
+
+// Event listeners para nuevas funcionalidades UI
+themeToggle.addEventListener('click', toggleTheme);
+
+shortcutsClose.addEventListener('click', toggleShortcutsModal);
+shortcutsModal.addEventListener('click', (e) => {
+    if (e.target === shortcutsModal) toggleShortcutsModal();
+});
+
 // ===== INICIALIZACIÓN =====
 window.addEventListener('load', () => {
+    // Cargar URL guardada
     const url = localStorage.getItem('urlSheet');
     if (url) {
         urlSheet.value = url;
     }
+
+    // Inicializar tema desde localStorage
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        const icon = themeToggle.querySelector('.theme-icon');
+        if (icon) icon.textContent = '☀️';
+    }
+
+    // Inicializar atajos de teclado
+    initKeyboardShortcuts();
+
+    // Mostrar mensaje de bienvenida
+    setTimeout(() => {
+        showToast('Bienvenido', 'Presiona ? para ver los atajos de teclado', 'info');
+    }, 1000);
 });
