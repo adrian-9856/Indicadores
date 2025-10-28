@@ -922,6 +922,449 @@ shortcutsModal.addEventListener('click', (e) => {
     if (e.target === shortcutsModal) toggleShortcutsModal();
 });
 
+// ===== PANEL DE ADMINISTRACIÓN =====
+
+// Variables de estado
+let programasLocal = [];
+let indicadoresLocal = [];
+let editandoPrograma = null;
+let editandoIndicador = null;
+
+// Referencias DOM
+const adminModal = document.getElementById('adminModal');
+const btnAdmin = document.getElementById('btnAdmin');
+const adminModalClose = document.getElementById('adminModalClose');
+const adminTabs = document.querySelectorAll('.admin-tab');
+const adminTabContents = document.querySelectorAll('.admin-tab-content');
+
+// Botones de formulario - Programas
+const btnSaveProgram = document.getElementById('btnSaveProgram');
+const btnCancelProgram = document.getElementById('btnCancelProgram');
+const programCodigo = document.getElementById('programCodigo');
+const programNombre = document.getElementById('programNombre');
+const programDescripcion = document.getElementById('programDescripcion');
+const programIcon = document.getElementById('programIcon');
+const programsList = document.getElementById('programsList');
+
+// Botones de formulario - Indicadores
+const btnSaveIndicator = document.getElementById('btnSaveIndicator');
+const btnCancelIndicator = document.getElementById('btnCancelIndicator');
+const indicatorCodigo = document.getElementById('indicatorCodigo');
+const indicatorPrograma = document.getElementById('indicatorPrograma');
+const indicatorCriterio = document.getElementById('indicatorCriterio');
+const indicatorNombre = document.getElementById('indicatorNombre');
+const indicatorDesc = document.getElementById('indicatorDesc');
+const indicatorTipo = document.getElementById('indicatorTipo');
+const indicatorDepto = document.getElementById('indicatorDepto');
+const indicatorNivel = document.getElementById('indicatorNivel');
+const indicatorTiempo = document.getElementById('indicatorTiempo');
+const indicatorsList = document.getElementById('indicatorsList');
+const adminSearchIndicators = document.getElementById('adminSearchIndicators');
+const adminFilterProgram = document.getElementById('adminFilterProgram');
+
+// ===== FUNCIONES DE LOCALSTORAGE =====
+
+function cargarDatosLocales() {
+    const programasGuardados = localStorage.getItem('programasLocal');
+    const indicadoresGuardados = localStorage.getItem('indicadoresLocal');
+
+    if (programasGuardados) {
+        try {
+            programasLocal = JSON.parse(programasGuardados);
+        } catch (e) {
+            console.error('Error al cargar programas:', e);
+            programasLocal = [];
+        }
+    }
+
+    if (indicadoresGuardados) {
+        try {
+            indicadoresLocal = JSON.parse(indicadoresGuardados);
+        } catch (e) {
+            console.error('Error al cargar indicadores:', e);
+            indicadoresLocal = [];
+        }
+    }
+}
+
+function guardarProgramas() {
+    localStorage.setItem('programasLocal', JSON.stringify(programasLocal));
+}
+
+function guardarIndicadores() {
+    localStorage.setItem('indicadoresLocal', JSON.stringify(indicadoresLocal));
+}
+
+// ===== CONTROL DEL MODAL =====
+
+function abrirAdminModal() {
+    cargarDatosLocales();
+    renderizarListaProgramas();
+    renderizarListaIndicadores();
+    actualizarSelectProgramas();
+    adminModal.classList.add('active');
+}
+
+function cerrarAdminModal() {
+    adminModal.classList.remove('active');
+    limpiarFormularioPrograma();
+    limpiarFormularioIndicador();
+}
+
+// ===== CONTROL DE TABS =====
+
+function cambiarTabAdmin(tabName) {
+    // Desactivar todas las tabs
+    adminTabs.forEach(tab => tab.classList.remove('active'));
+    adminTabContents.forEach(content => content.classList.remove('active'));
+
+    // Activar tab seleccionada
+    const tabBtn = document.querySelector(`[data-admin-tab="${tabName}"]`);
+    const tabContent = document.getElementById(`adminTab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
+
+    if (tabBtn) tabBtn.classList.add('active');
+    if (tabContent) tabContent.classList.add('active');
+}
+
+// ===== GESTIÓN DE PROGRAMAS =====
+
+function limpiarFormularioPrograma() {
+    programCodigo.value = '';
+    programNombre.value = '';
+    programDescripcion.value = '';
+    programIcon.value = '';
+    editandoPrograma = null;
+    btnSaveProgram.innerHTML = '💾 Guardar Programa';
+}
+
+function validarFormularioPrograma() {
+    if (!programCodigo.value.trim()) {
+        showToast('Error', 'El código del programa es requerido', 'error');
+        return false;
+    }
+    if (!programNombre.value.trim()) {
+        showToast('Error', 'El nombre del programa es requerido', 'error');
+        return false;
+    }
+    return true;
+}
+
+function guardarPrograma() {
+    if (!validarFormularioPrograma()) return;
+
+    const programa = {
+        codigo: programCodigo.value.trim(),
+        nombre: programNombre.value.trim(),
+        descripcion: programDescripcion.value.trim(),
+        icono: programIcon.value.trim() || '📚'
+    };
+
+    if (editandoPrograma !== null) {
+        // Editar programa existente
+        programasLocal[editandoPrograma] = programa;
+        showToast('Éxito', 'Programa actualizado correctamente', 'success');
+    } else {
+        // Agregar nuevo programa
+        // Verificar que no exista el código
+        if (programasLocal.some(p => p.codigo === programa.codigo)) {
+            showToast('Error', 'Ya existe un programa con ese código', 'error');
+            return;
+        }
+        programasLocal.push(programa);
+        showToast('Éxito', 'Programa agregado correctamente', 'success');
+    }
+
+    guardarProgramas();
+    renderizarListaProgramas();
+    actualizarSelectProgramas();
+    limpiarFormularioPrograma();
+}
+
+function editarPrograma(index) {
+    const programa = programasLocal[index];
+    programCodigo.value = programa.codigo;
+    programNombre.value = programa.nombre;
+    programDescripcion.value = programa.descripcion || '';
+    programIcon.value = programa.icono || '';
+    editandoPrograma = index;
+    btnSaveProgram.innerHTML = '✏️ Actualizar Programa';
+
+    // Scroll al formulario
+    document.querySelector('.admin-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function eliminarPrograma(index) {
+    const programa = programasLocal[index];
+
+    // Verificar si hay indicadores asociados
+    const indicadoresAsociados = indicadoresLocal.filter(i => i.programa === programa.codigo);
+
+    if (indicadoresAsociados.length > 0) {
+        if (!confirm(`Este programa tiene ${indicadoresAsociados.length} indicadores asociados. ¿Desea eliminarlo de todos modos? Los indicadores quedarán sin programa asignado.`)) {
+            return;
+        }
+        // Actualizar indicadores para quitar referencia al programa
+        indicadoresLocal = indicadoresLocal.map(ind => {
+            if (ind.programa === programa.codigo) {
+                return { ...ind, programa: '' };
+            }
+            return ind;
+        });
+        guardarIndicadores();
+    }
+
+    programasLocal.splice(index, 1);
+    guardarProgramas();
+    renderizarListaProgramas();
+    actualizarSelectProgramas();
+    renderizarListaIndicadores();
+    showToast('Éxito', 'Programa eliminado correctamente', 'success');
+}
+
+function renderizarListaProgramas() {
+    if (programasLocal.length === 0) {
+        programsList.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:2rem;">No hay programas registrados</p>';
+        return;
+    }
+
+    programsList.innerHTML = programasLocal.map((programa, index) => `
+        <div class="admin-item">
+            <div class="admin-item-header">
+                <h4 class="admin-item-title">${programa.icono} ${programa.nombre}</h4>
+                <span class="admin-item-code">${programa.codigo}</span>
+            </div>
+            ${programa.descripcion ? `<div class="admin-item-body">${programa.descripcion}</div>` : ''}
+            <div class="admin-item-actions">
+                <button class="btn-admin-edit" onclick="editarPrograma(${index})">✏️ Editar</button>
+                <button class="btn-admin-delete" onclick="eliminarPrograma(${index})">🗑️ Eliminar</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function actualizarSelectProgramas() {
+    // Actualizar select en formulario de indicadores
+    indicatorPrograma.innerHTML = '<option value="">Seleccionar programa...</option>' +
+        programasLocal.map(p => `<option value="${p.codigo}">${p.icono} ${p.nombre}</option>`).join('');
+
+    // Actualizar filtro de programas
+    adminFilterProgram.innerHTML = '<option value="">Todos los programas</option>' +
+        programasLocal.map(p => `<option value="${p.codigo}">${p.icono} ${p.nombre}</option>`).join('');
+}
+
+// ===== GESTIÓN DE INDICADORES =====
+
+function limpiarFormularioIndicador() {
+    indicatorCodigo.value = '';
+    indicatorPrograma.value = '';
+    indicatorCriterio.value = '';
+    indicatorNombre.value = '';
+    indicatorDesc.value = '';
+    indicatorTipo.value = '';
+    indicatorDepto.value = '';
+    indicatorNivel.value = '';
+    indicatorTiempo.value = '';
+    editandoIndicador = null;
+    btnSaveIndicator.innerHTML = '💾 Guardar Indicador';
+}
+
+function validarFormularioIndicador() {
+    if (!indicatorCodigo.value.trim()) {
+        showToast('Error', 'El código del indicador es requerido', 'error');
+        return false;
+    }
+    if (!indicatorPrograma.value) {
+        showToast('Error', 'Debe seleccionar un programa', 'error');
+        return false;
+    }
+    if (!indicatorCriterio.value.trim()) {
+        showToast('Error', 'El criterio es requerido', 'error');
+        return false;
+    }
+    if (!indicatorNombre.value.trim()) {
+        showToast('Error', 'El nombre del indicador es requerido', 'error');
+        return false;
+    }
+    if (!indicatorTipo.value) {
+        showToast('Error', 'Debe seleccionar un tipo de indicador', 'error');
+        return false;
+    }
+    return true;
+}
+
+function guardarIndicador() {
+    if (!validarFormularioIndicador()) return;
+
+    const indicador = {
+        codigo: indicatorCodigo.value.trim(),
+        programa: indicatorPrograma.value,
+        criterio: indicatorCriterio.value.trim(),
+        nombre: indicatorNombre.value.trim(),
+        desc: indicatorDesc.value.trim(),
+        tipo: indicatorTipo.value,
+        depto: indicatorDepto.value.trim() || 'No especificado',
+        nivel: indicatorNivel.value.trim() || 'No especificado',
+        tiempo: indicatorTiempo.value.trim() || 'No especificado',
+        nombrePrograma: extraerNombrePrograma(indicatorCriterio.value.trim())
+    };
+
+    if (editandoIndicador !== null) {
+        // Editar indicador existente
+        indicadoresLocal[editandoIndicador] = indicador;
+        showToast('Éxito', 'Indicador actualizado correctamente', 'success');
+    } else {
+        // Agregar nuevo indicador
+        // Verificar que no exista el código
+        if (indicadoresLocal.some(i => i.codigo === indicador.codigo)) {
+            showToast('Error', 'Ya existe un indicador con ese código', 'error');
+            return;
+        }
+        indicadoresLocal.push(indicador);
+        showToast('Éxito', 'Indicador agregado correctamente', 'success');
+    }
+
+    guardarIndicadores();
+    renderizarListaIndicadores();
+    limpiarFormularioIndicador();
+}
+
+function editarIndicador(index) {
+    const indicador = indicadoresLocal[index];
+    indicatorCodigo.value = indicador.codigo;
+    indicatorPrograma.value = indicador.programa;
+    indicatorCriterio.value = indicador.criterio;
+    indicatorNombre.value = indicador.nombre;
+    indicatorDesc.value = indicador.desc || '';
+    indicatorTipo.value = indicador.tipo;
+    indicatorDepto.value = indicador.depto || '';
+    indicatorNivel.value = indicador.nivel || '';
+    indicatorTiempo.value = indicador.tiempo || '';
+    editandoIndicador = index;
+    btnSaveIndicator.innerHTML = '✏️ Actualizar Indicador';
+
+    // Cambiar a la tab de indicadores si no está activa
+    cambiarTabAdmin('indicators');
+
+    // Scroll al formulario
+    setTimeout(() => {
+        document.querySelector('#adminTabIndicators .admin-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+}
+
+function eliminarIndicador(index) {
+    if (!confirm('¿Está seguro de eliminar este indicador?')) return;
+
+    indicadoresLocal.splice(index, 1);
+    guardarIndicadores();
+    renderizarListaIndicadores();
+    showToast('Éxito', 'Indicador eliminado correctamente', 'success');
+}
+
+function renderizarListaIndicadores() {
+    const textoFiltro = adminSearchIndicators.value.toLowerCase();
+    const programaFiltro = adminFilterProgram.value;
+
+    let indicadoresFiltrados = indicadoresLocal.filter(ind => {
+        const coincideTexto =
+            ind.codigo.toLowerCase().includes(textoFiltro) ||
+            ind.nombre.toLowerCase().includes(textoFiltro) ||
+            ind.criterio.toLowerCase().includes(textoFiltro);
+
+        const coincidePrograma = !programaFiltro || ind.programa === programaFiltro;
+
+        return coincideTexto && coincidePrograma;
+    });
+
+    if (indicadoresFiltrados.length === 0) {
+        indicatorsList.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:2rem;">No hay indicadores que coincidan con los filtros</p>';
+        return;
+    }
+
+    // Obtener icono del tipo
+    const getTipoIcono = (tipo) => {
+        switch(tipo) {
+            case 'Impacto': return '💫';
+            case 'Resultado': return '✅';
+            case 'Proceso': return '📊';
+            default: return '❓';
+        }
+    };
+
+    indicatorsList.innerHTML = indicadoresFiltrados.map((indicador, originalIndex) => {
+        const index = indicadoresLocal.indexOf(indicador);
+        const programa = programasLocal.find(p => p.codigo === indicador.programa);
+
+        return `
+            <div class="admin-item">
+                <div class="admin-item-header">
+                    <h4 class="admin-item-title">${getTipoIcono(indicador.tipo)} ${indicador.nombre}</h4>
+                    <span class="admin-item-code">${indicador.codigo}</span>
+                </div>
+                <div class="admin-item-body">
+                    <strong>Programa:</strong> ${programa ? programa.icono + ' ' + programa.nombre : 'Sin programa'}<br>
+                    <strong>Criterio:</strong> ${indicador.criterio}<br>
+                    <strong>Tipo:</strong> ${indicador.tipo}
+                </div>
+                <div class="admin-item-actions">
+                    <button class="btn-admin-edit" onclick="editarIndicador(${index})">✏️ Editar</button>
+                    <button class="btn-admin-delete" onclick="eliminarIndicador(${index})">🗑️ Eliminar</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ===== SINCRONIZAR CON DATOS PRINCIPALES =====
+
+function sincronizarDatosLocalesConPrincipales() {
+    // Si hay datos en localStorage, cargarlos en el array principal
+    if (indicadoresLocal.length > 0) {
+        // Preguntar al usuario si desea usar datos locales o de Google Sheets
+        if (indicadores.length > 0) {
+            if (confirm('Se detectaron datos locales. ¿Desea usar los datos guardados localmente en lugar de los datos de Google Sheets?')) {
+                indicadores = [...indicadoresLocal];
+                aplicarFiltros();
+                showToast('Datos cargados', 'Se cargaron los datos desde el almacenamiento local', 'info');
+            }
+        } else {
+            // Si no hay datos de Sheets, usar los locales directamente
+            indicadores = [...indicadoresLocal];
+            aplicarFiltros();
+            showToast('Datos cargados', 'Se cargaron los datos desde el almacenamiento local', 'info');
+        }
+    }
+}
+
+// ===== EVENT LISTENERS =====
+
+btnAdmin.addEventListener('click', abrirAdminModal);
+adminModalClose.addEventListener('click', cerrarAdminModal);
+
+// Cerrar modal al hacer clic fuera
+adminModal.addEventListener('click', (e) => {
+    if (e.target === adminModal) cerrarAdminModal();
+});
+
+// Tabs
+adminTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        const tabName = tab.dataset.adminTab;
+        cambiarTabAdmin(tabName);
+    });
+});
+
+// Programas
+btnSaveProgram.addEventListener('click', guardarPrograma);
+btnCancelProgram.addEventListener('click', limpiarFormularioPrograma);
+
+// Indicadores
+btnSaveIndicator.addEventListener('click', guardarIndicador);
+btnCancelIndicator.addEventListener('click', limpiarFormularioIndicador);
+
+// Filtros de indicadores
+adminSearchIndicators.addEventListener('input', renderizarListaIndicadores);
+adminFilterProgram.addEventListener('change', renderizarListaIndicadores);
+
 // ===== INICIALIZACIÓN =====
 window.addEventListener('load', () => {
     // Cargar URL guardada
@@ -940,6 +1383,10 @@ window.addEventListener('load', () => {
 
     // Inicializar atajos de teclado
     initKeyboardShortcuts();
+
+    // Cargar datos locales
+    cargarDatosLocales();
+    sincronizarDatosLocalesConPrincipales();
 
     // Mostrar mensaje de bienvenida
     setTimeout(() => {

@@ -17,6 +17,10 @@
             </div>
             <div class="header-right">
                 <input type="text" id="searchInput" placeholder="🔍 Buscar indicador..." class="search-input">
+                <button id="btnAdmin" class="btn-admin" title="Panel de Administración">
+                    <span class="admin-icon">⚙️</span>
+                    <span class="admin-label">Administrar</span>
+                </button>
                 <button id="themeToggle" class="theme-toggle" title="Cambiar tema">
                     <span class="theme-icon">🌙</span>
                 </button>
@@ -325,6 +329,174 @@
                     <kbd>?</kbd>
                     <span>Mostrar Ayuda</span>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN MODAL -->
+    <div id="adminModal" class="admin-modal-overlay">
+        <div class="admin-modal-container">
+            <div class="admin-modal-header">
+                <h2 class="admin-modal-title">⚙️ Panel de Administración</h2>
+                <button class="admin-modal-close" id="adminModalClose">&times;</button>
+            </div>
+
+            <!-- ADMIN TABS -->
+            <div class="admin-tabs">
+                <button class="admin-tab active" data-admin-tab="programs">
+                    <span class="admin-tab-icon">📚</span>
+                    <span>Programas</span>
+                </button>
+                <button class="admin-tab" data-admin-tab="indicators">
+                    <span class="admin-tab-icon">📊</span>
+                    <span>Indicadores</span>
+                </button>
+            </div>
+
+            <div class="admin-modal-body">
+
+                <!-- TAB: PROGRAMS -->
+                <div class="admin-tab-content active" id="adminTabPrograms">
+                    <div class="admin-section">
+                        <h3 class="admin-section-title">Gestión de Programas</h3>
+
+                        <div class="admin-form">
+                            <div class="admin-form-row">
+                                <div class="admin-form-group">
+                                    <label for="programCodigo">Código del Programa *</label>
+                                    <input type="text" id="programCodigo" placeholder="Ej: C.I" class="admin-input" required>
+                                </div>
+                                <div class="admin-form-group">
+                                    <label for="programNombre">Nombre del Programa *</label>
+                                    <input type="text" id="programNombre" placeholder="Ej: Educación" class="admin-input" required>
+                                </div>
+                            </div>
+
+                            <div class="admin-form-row">
+                                <div class="admin-form-group full-width">
+                                    <label for="programDescripcion">Descripción</label>
+                                    <textarea id="programDescripcion" placeholder="Descripción del programa..." class="admin-textarea" rows="3"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="admin-form-row">
+                                <div class="admin-form-group">
+                                    <label for="programIcon">Icono (Emoji)</label>
+                                    <input type="text" id="programIcon" placeholder="📚" class="admin-input" maxlength="2">
+                                </div>
+                            </div>
+
+                            <div class="admin-form-actions">
+                                <button id="btnSaveProgram" class="btn-admin-primary">
+                                    💾 Guardar Programa
+                                </button>
+                                <button id="btnCancelProgram" class="btn-admin-secondary">
+                                    ✖️ Cancelar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="admin-list">
+                            <h4 class="admin-list-title">Programas Existentes</h4>
+                            <div id="programsList" class="admin-items-list">
+                                <!-- Programs will be listed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: INDICATORS -->
+                <div class="admin-tab-content" id="adminTabIndicators">
+                    <div class="admin-section">
+                        <h3 class="admin-section-title">Gestión de Indicadores</h3>
+
+                        <div class="admin-form">
+                            <div class="admin-form-row">
+                                <div class="admin-form-group">
+                                    <label for="indicatorCodigo">Código del Indicador *</label>
+                                    <input type="text" id="indicatorCodigo" placeholder="Ej: C.I.1" class="admin-input" required>
+                                </div>
+                                <div class="admin-form-group">
+                                    <label for="indicatorPrograma">Programa *</label>
+                                    <select id="indicatorPrograma" class="admin-select" required>
+                                        <option value="">Seleccionar programa...</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="admin-form-row">
+                                <div class="admin-form-group full-width">
+                                    <label for="indicatorCriterio">Criterio *</label>
+                                    <input type="text" id="indicatorCriterio" placeholder="Ej: Educación - Calidad" class="admin-input" required>
+                                </div>
+                            </div>
+
+                            <div class="admin-form-row">
+                                <div class="admin-form-group full-width">
+                                    <label for="indicatorNombre">Nombre del Indicador *</label>
+                                    <input type="text" id="indicatorNombre" placeholder="Nombre descriptivo del indicador..." class="admin-input" required>
+                                </div>
+                            </div>
+
+                            <div class="admin-form-row">
+                                <div class="admin-form-group full-width">
+                                    <label for="indicatorDesc">Descripción</label>
+                                    <textarea id="indicatorDesc" placeholder="Descripción detallada del indicador..." class="admin-textarea" rows="3"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="admin-form-row">
+                                <div class="admin-form-group">
+                                    <label for="indicatorTipo">Tipo de Indicador *</label>
+                                    <select id="indicatorTipo" class="admin-select" required>
+                                        <option value="">Seleccionar tipo...</option>
+                                        <option value="Impacto">💫 Impacto</option>
+                                        <option value="Resultado">✅ Resultado</option>
+                                        <option value="Proceso">📊 Proceso</option>
+                                    </select>
+                                </div>
+                                <div class="admin-form-group">
+                                    <label for="indicatorDepto">Departamento</label>
+                                    <input type="text" id="indicatorDepto" placeholder="Ej: Programas" class="admin-input">
+                                </div>
+                            </div>
+
+                            <div class="admin-form-row">
+                                <div class="admin-form-group">
+                                    <label for="indicatorNivel">Nivel de Medición</label>
+                                    <input type="text" id="indicatorNivel" placeholder="Ej: Actividad" class="admin-input">
+                                </div>
+                                <div class="admin-form-group">
+                                    <label for="indicatorTiempo">Periodicidad</label>
+                                    <input type="text" id="indicatorTiempo" placeholder="Ej: Mensual" class="admin-input">
+                                </div>
+                            </div>
+
+                            <div class="admin-form-actions">
+                                <button id="btnSaveIndicator" class="btn-admin-primary">
+                                    💾 Guardar Indicador
+                                </button>
+                                <button id="btnCancelIndicator" class="btn-admin-secondary">
+                                    ✖️ Cancelar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="admin-list">
+                            <h4 class="admin-list-title">Indicadores Existentes</h4>
+                            <div class="admin-filter-bar">
+                                <input type="text" id="adminSearchIndicators" placeholder="🔍 Buscar indicador..." class="admin-search">
+                                <select id="adminFilterProgram" class="admin-select-small">
+                                    <option value="">Todos los programas</option>
+                                </select>
+                            </div>
+                            <div id="indicatorsList" class="admin-items-list">
+                                <!-- Indicators will be listed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
