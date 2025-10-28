@@ -366,7 +366,9 @@ function extraerNombrePrograma(codigoPrograma) {
         'IL': 'Inclusión Laboral (IL)',
         'ME': 'Mi-Eelo (ME)',
         'AE': 'Apoyo Emocional (AE)',
-        'CCi': 'Ciudadanía Civic (CCi)'
+        'CCI': 'Centro de Cuidado Infantil (CCI)',
+        'CCi': 'Centro de Cuidado Infantil (CCI)',
+        'CCİ': 'Centro de Cuidado Infantil (CCI)'
     };
 
     // Buscar el código exacto
@@ -482,13 +484,13 @@ function renderizarDiagrama() {
     }
 
     // CASO 3: Por defecto - mostrar ESTRUCTURA FIJA DE PROGRAMAS CREAMOS
-    // Estructura fija: CREAMOS → CEEX, IL, ME, AE, CCi
+    // Estructura fija: CREAMOS → CEEX, IL, ME, AE, CCI
     const programasCREAMOS = [
         { codigo: 'CEEX', nombre: 'Educación (CEEX)', icono: '📚' },
         { codigo: 'IL', nombre: 'Inclusión Laboral (IL)', icono: '💼' },
         { codigo: 'ME', nombre: 'Mi-Eelo (ME)', icono: '🌟' },
         { codigo: 'AE', nombre: 'Apoyo Emocional (AE)', icono: '💙' },
-        { codigo: 'CCi', nombre: 'Ciudadanía Civic (CCi)', icono: '🏛️' }
+        { codigo: 'CCI', nombre: 'Centro de Cuidado Infantil (CCI)', icono: '👶' }
     ];
 
     programasCREAMOS.forEach(programa => {
@@ -1455,6 +1457,20 @@ btnCancelIndicator.addEventListener('click', limpiarFormularioIndicador);
 adminSearchIndicators.addEventListener('input', renderizarListaIndicadores);
 adminFilterProgram.addEventListener('change', renderizarListaIndicadores);
 
+// ===== SIDEBAR TOGGLE =====
+const sidebarToggle = document.getElementById('sidebarToggle');
+const mainWrapper = document.querySelector('.main-wrapper');
+
+if (sidebarToggle) {
+    sidebarToggle.addEventListener('click', () => {
+        mainWrapper.classList.toggle('sidebar-collapsed');
+
+        // Guardar estado en localStorage
+        const isCollapsed = mainWrapper.classList.contains('sidebar-collapsed');
+        localStorage.setItem('sidebarCollapsed', isCollapsed);
+    });
+}
+
 // ===== INICIALIZACIÓN =====
 window.addEventListener('load', () => {
     // Cargar URL guardada
@@ -1473,6 +1489,15 @@ window.addEventListener('load', () => {
 
     // Inicializar atajos de teclado
     initKeyboardShortcuts();
+
+    // Restaurar estado del sidebar
+    const sidebarCollapsed = localStorage.getItem('sidebarCollapsed');
+    if (sidebarCollapsed === 'true') {
+        const mainWrapper = document.querySelector('.main-wrapper');
+        if (mainWrapper) {
+            mainWrapper.classList.add('sidebar-collapsed');
+        }
+    }
 
     // Cargar datos locales
     cargarDatosLocales();
