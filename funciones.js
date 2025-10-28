@@ -48,12 +48,41 @@ async function cargarDatos() {
             return idx >= 0 ? idx : -1;
         };
 
+        const idxOrden = getColIndex('orden');
         const idxCodigo = getColIndex('código');
         const idxCriterio = getColIndex('criterio');
         const idxIndicador = getColIndex('indicador');
         const idxDescripcion = getColIndex('descripción');
         const idxNivel = getColIndex('nivel');
         const idxTiempo = getColIndex('tiempo');
+        const idxHerramienta = getColIndex('herramienta');
+        const idxFuenteVerificacion = getColIndex('fuente de verificación');
+        const idxResponsable = getColIndex('responsable');
+        const idxFrecuencia = getColIndex('frecuencia');
+        const idxDesagregacion = getColIndex('desagregación');
+        const idxRecogiendoDatos = getColIndex('ya recogiendo datos');
+        const idxEstadoFuente = getColIndex('estado de fuente');
+        const idxNecesitaCampoSF = getColIndex('se necesita campo en sf');
+        const idxEstadoSF = getColIndex('estado en sf');
+        const idxHistorico2024 = getColIndex('histórico 2024');
+        const idxTarget2025 = getColIndex('target 2025');
+        const idxProyecciones2026 = getColIndex('proyecciones 2026');
+        const idxM1 = getColIndex('m1');
+        const idxM2 = getColIndex('m2');
+        const idxM3 = getColIndex('m3');
+        const idxQ1 = getColIndex('q1');
+        const idxM4 = getColIndex('m4');
+        const idxM5 = getColIndex('m5');
+        const idxM6 = getColIndex('m6');
+        const idxQ2 = getColIndex('q2');
+        const idxM7 = getColIndex('m7');
+        const idxM8 = getColIndex('m8');
+        const idxM9 = getColIndex('m9');
+        const idxQ3 = getColIndex('q3');
+        const idxM10 = getColIndex('m10');
+        const idxM11 = getColIndex('m11');
+        const idxM12 = getColIndex('m12');
+        const idxQ4 = getColIndex('q4');
 
         for (let i = 1; i < lineas.length; i++) {
             const linea = lineas[i].trim();
@@ -64,34 +93,64 @@ async function cargarDatos() {
             const codigo = getColValue(cols, idxCodigo);
             const criterio = getColValue(cols, idxCriterio);
             const nombre = getColValue(cols, idxIndicador);
-            const desc = getColValue(cols, idxDescripcion);
-            const nivel = getColValue(cols, idxNivel);
-            const tiempo = getColValue(cols, idxTiempo);
 
             // Validar que tenemos datos mínimos
             if (!codigo || !nombre || codigo.includes('#') || codigo === 'Código') continue;
 
             // Detectar tipo
-            let tipo = detectarTipo(tiempo, criterio, nombre);
+            let tipo = detectarTipo(getColValue(cols, idxTiempo), criterio, nombre);
 
             // Detectar departamento
             let depto = detectarDepartamento(codigo);
 
-            // Extraer programa del código
-            const programa = codigo.includes('.') ? codigo.split('.')[0] + '.' + codigo.split('.')[1].charAt(0) : codigo.split('.')[0];
+            // Extraer programa del código (CEEX, IL, ME, AE, CCi)
+            let programa = 'Otros';
+            if (codigo.includes('.')) {
+                const partes = codigo.split('.');
+                programa = partes[0]; // CEEX, IL, ME, AE, CCi
+            }
 
-            // Extraer nombre del programa desde el criterio
-            const nombrePrograma = extraerNombrePrograma(criterio);
+            // Extraer nombre del programa desde el código
+            const nombrePrograma = extraerNombrePrograma(programa);
 
             indicadores.push({
+                orden: getColValue(cols, idxOrden),
                 codigo,
                 criterio,
                 nombre,
-                desc,
+                desc: getColValue(cols, idxDescripcion),
+                nivel: getColValue(cols, idxNivel),
+                tiempo: getColValue(cols, idxTiempo),
+                herramienta: getColValue(cols, idxHerramienta),
+                fuenteVerificacion: getColValue(cols, idxFuenteVerificacion),
+                responsable: getColValue(cols, idxResponsable),
+                frecuencia: getColValue(cols, idxFrecuencia),
+                desagregacion: getColValue(cols, idxDesagregacion),
+                recogiendoDatos: getColValue(cols, idxRecogiendoDatos),
+                estadoFuente: getColValue(cols, idxEstadoFuente),
+                necesitaCampoSF: getColValue(cols, idxNecesitaCampoSF),
+                estadoSF: getColValue(cols, idxEstadoSF),
+                historico2024: getColValue(cols, idxHistorico2024),
+                target2025: getColValue(cols, idxTarget2025),
+                proyecciones2026: getColValue(cols, idxProyecciones2026),
+                m1: getColValue(cols, idxM1),
+                m2: getColValue(cols, idxM2),
+                m3: getColValue(cols, idxM3),
+                q1: getColValue(cols, idxQ1),
+                m4: getColValue(cols, idxM4),
+                m5: getColValue(cols, idxM5),
+                m6: getColValue(cols, idxM6),
+                q2: getColValue(cols, idxQ2),
+                m7: getColValue(cols, idxM7),
+                m8: getColValue(cols, idxM8),
+                m9: getColValue(cols, idxM9),
+                q3: getColValue(cols, idxQ3),
+                m10: getColValue(cols, idxM10),
+                m11: getColValue(cols, idxM11),
+                m12: getColValue(cols, idxM12),
+                q4: getColValue(cols, idxQ4),
                 tipo,
                 depto,
-                nivel,
-                tiempo,
                 programa,
                 nombrePrograma
             });
@@ -298,29 +357,26 @@ function detectarDepartamento(codigo) {
 }
 
 // ===== EXTRAER NOMBRE DEL PROGRAMA =====
-function extraerNombrePrograma(criterio) {
-    if (!criterio) return 'Sin programa';
+function extraerNombrePrograma(codigoPrograma) {
+    if (!codigoPrograma) return 'Sin programa';
 
-    // Buscar patrones comunes en criterios
-    const criterioLower = criterio.toLowerCase();
+    // Mapeo de códigos a nombres de programas (ESTRUCTURA CREAMOS)
+    const programasMap = {
+        'CEEX': 'Educación (CEEX)',
+        'IL': 'Inclusión Laboral (IL)',
+        'ME': 'Mi-Eelo (ME)',
+        'AE': 'Apoyo Emocional (AE)',
+        'CCi': 'Ciudadanía Civic (CCi)'
+    };
 
-    // Mapeo de palabras clave a nombres de programas (ESTRUCTURA CREAMOS)
-    if (criterioLower.includes('educación') || criterioLower.includes('educacion')) return 'Educación';
-    if (criterioLower.includes('apoyo emocional') || criterioLower.includes('emocional')) return 'Apoyo Emocional';
-    if (criterioLower.includes('mi-eelo') || criterioLower.includes('mieelo') || criterioLower.includes('mi eelo')) return 'Mi-Eelo';
-    if (criterioLower.includes('inclusión laboral') || criterioLower.includes('inclusion laboral') || criterioLower.includes('laboral')) return 'Inclusión Laboral';
+    // Buscar el código exacto
+    const codigo = codigoPrograma.toUpperCase().trim();
+    if (programasMap[codigo]) {
+        return programasMap[codigo];
+    }
 
-    // Otros programas adicionales
-    if (criterioLower.includes('empoderamiento') || criterioLower.includes('empoderan')) return 'Empoderamiento';
-    if (criterioLower.includes('protección') || criterioLower.includes('proteccion')) return 'Protección';
-    if (criterioLower.includes('salud')) return 'Salud';
-    if (criterioLower.includes('nutrición') || criterioLower.includes('nutricion')) return 'Nutrición';
-    if (criterioLower.includes('agua') || criterioLower.includes('saneamiento')) return 'Agua y Saneamiento';
-    if (criterioLower.includes('medios de vida') || criterioLower.includes('mevida')) return 'Medios de Vida';
-    if (criterioLower.includes('incidencia') || criterioLower.includes('advocacy')) return 'Incidencia';
-
-    // Si no coincide con ninguno, usar el criterio como está
-    return criterio.split('-')[0].trim();
+    // Si no coincide, devolver el código tal cual
+    return codigoPrograma;
 }
 
 // ===== ACTUALIZAR ESTADÍSTICAS =====
@@ -426,28 +482,23 @@ function renderizarDiagrama() {
     }
 
     // CASO 3: Por defecto - mostrar ESTRUCTURA FIJA DE PROGRAMAS CREAMOS
-    // Estructura fija: CREAMOS → Apoyo Emocional, Educación, Mi-Eelo, Inclusión Laboral
+    // Estructura fija: CREAMOS → CEEX, IL, ME, AE, CCi
     const programasCREAMOS = [
-        { nombre: 'Apoyo Emocional', icono: '💙' },
-        { nombre: 'Educación', icono: '📚' },
-        { nombre: 'Mi-Eelo', icono: '🌟' },
-        { nombre: 'Inclusión Laboral', icono: '💼' }
+        { codigo: 'CEEX', nombre: 'Educación (CEEX)', icono: '📚' },
+        { codigo: 'IL', nombre: 'Inclusión Laboral (IL)', icono: '💼' },
+        { codigo: 'ME', nombre: 'Mi-Eelo (ME)', icono: '🌟' },
+        { codigo: 'AE', nombre: 'Apoyo Emocional (AE)', icono: '💙' },
+        { codigo: 'CCi', nombre: 'Ciudadanía Civic (CCi)', icono: '🏛️' }
     ];
 
     programasCREAMOS.forEach(programa => {
+        const codigoProg = programa.codigo;
         const nombreProg = programa.nombre;
         const icono = programa.icono;
 
         // Contar indicadores que pertenecen a este programa
-        const indsPrograma = indicadores.filter(i =>
-            i.nombrePrograma === nombreProg ||
-            i.criterio.toLowerCase().includes(nombreProg.toLowerCase())
-        );
-
-        const indsProgramaFiltrados = indsFiltrados.filter(i =>
-            i.nombrePrograma === nombreProg ||
-            i.criterio.toLowerCase().includes(nombreProg.toLowerCase())
-        );
+        const indsPrograma = indicadores.filter(i => i.programa === codigoProg);
+        const indsProgramaFiltrados = indsFiltrados.filter(i => i.programa === codigoProg);
 
         const node = document.createElement('div');
         node.className = 'diagram-node programa-node';
@@ -624,21 +675,55 @@ function abrirModal(ind) {
     // Guardar indicador actual para exportación
     window.indicadorActual = ind;
 
+    // Helper function para mostrar valor o 'No especificado'
+    const mostrarValor = (valor) => valor || 'No especificado';
+
     // Tab Información
     document.getElementById('modalTitle').textContent = ind.nombre;
     document.getElementById('modalCode').textContent = ind.codigo;
     document.getElementById('modalType').textContent = ind.tipo;
-    document.getElementById('modalDeptTag').textContent = ind.depto;
+    document.getElementById('modalDeptTag').textContent = ind.nombrePrograma || ind.programa;
     document.getElementById('modalCodigo').textContent = ind.codigo;
-    document.getElementById('modalCriterio').textContent = ind.criterio || 'No especificado';
+    document.getElementById('modalCriterio').textContent = mostrarValor(ind.criterio);
     document.getElementById('modalDesc').textContent = ind.desc || 'Sin descripción disponible';
     document.getElementById('modalTipo').textContent = ind.tipo;
-    document.getElementById('modalDepto').textContent = ind.depto;
-    document.getElementById('modalPrograma').textContent = ind.programa;
-    document.getElementById('modalNivel').textContent = ind.nivel || 'No especificado';
+    document.getElementById('modalPrograma').textContent = ind.nombrePrograma || ind.programa;
+    document.getElementById('modalNivel').textContent = mostrarValor(ind.nivel);
+    document.getElementById('modalHerramienta').textContent = mostrarValor(ind.herramienta);
+    document.getElementById('modalResponsable').textContent = mostrarValor(ind.responsable);
 
     // Tab Medición
-    document.getElementById('modalPeriodicidad').textContent = ind.tiempo || 'No especificado';
+    document.getElementById('modalPeriodicidad').textContent = mostrarValor(ind.tiempo);
+    document.getElementById('modalFrecuencia').textContent = mostrarValor(ind.frecuencia);
+    document.getElementById('modalDesagregacion').textContent = mostrarValor(ind.desagregacion);
+    document.getElementById('modalRecogiendoDatos').textContent = mostrarValor(ind.recogiendoDatos);
+    document.getElementById('modalEstadoFuente').textContent = mostrarValor(ind.estadoFuente);
+    document.getElementById('modalNecesitaCampoSF').textContent = mostrarValor(ind.necesitaCampoSF);
+    document.getElementById('modalEstadoSF').textContent = mostrarValor(ind.estadoSF);
+
+    // Tab Datos M&E
+    document.getElementById('modalHistorico2024').textContent = mostrarValor(ind.historico2024);
+    document.getElementById('modalTarget2025').textContent = mostrarValor(ind.target2025);
+    document.getElementById('modalProyecciones2026').textContent = mostrarValor(ind.proyecciones2026);
+    document.getElementById('modalM1').textContent = mostrarValor(ind.m1);
+    document.getElementById('modalM2').textContent = mostrarValor(ind.m2);
+    document.getElementById('modalM3').textContent = mostrarValor(ind.m3);
+    document.getElementById('modalQ1').textContent = mostrarValor(ind.q1);
+    document.getElementById('modalM4').textContent = mostrarValor(ind.m4);
+    document.getElementById('modalM5').textContent = mostrarValor(ind.m5);
+    document.getElementById('modalM6').textContent = mostrarValor(ind.m6);
+    document.getElementById('modalQ2').textContent = mostrarValor(ind.q2);
+    document.getElementById('modalM7').textContent = mostrarValor(ind.m7);
+    document.getElementById('modalM8').textContent = mostrarValor(ind.m8);
+    document.getElementById('modalM9').textContent = mostrarValor(ind.m9);
+    document.getElementById('modalQ3').textContent = mostrarValor(ind.q3);
+    document.getElementById('modalM10').textContent = mostrarValor(ind.m10);
+    document.getElementById('modalM11').textContent = mostrarValor(ind.m11);
+    document.getElementById('modalM12').textContent = mostrarValor(ind.m12);
+    document.getElementById('modalQ4').textContent = mostrarValor(ind.q4);
+
+    // Tab Guía
+    document.getElementById('modalFuenteVerificacion').textContent = mostrarValor(ind.fuenteVerificacion);
 
     // Resetear a la primera tab
     document.querySelectorAll('.modal-tab').forEach(tab => tab.classList.remove('active'));

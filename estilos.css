@@ -1128,6 +1128,63 @@ body.dark-mode .modal-field-value {
     color: #2C3E50;
 }
 
+/* Métricas Grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.metrics-grid .modal-field {
+    margin-bottom: 0;
+    padding: 1.25rem;
+    background: var(--bg-light);
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    transition: all 0.3s ease;
+}
+
+.metrics-grid .modal-field:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(10, 123, 196, 0.1);
+}
+
+.metrics-grid .modal-field.quarter {
+    background: linear-gradient(135deg, rgba(10, 123, 196, 0.1), rgba(30, 159, 232, 0.1));
+    border-color: var(--primary);
+}
+
+.metrics-grid .modal-field label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.metrics-grid .modal-field p {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.metric-value {
+    font-size: 1.75rem !important;
+    font-weight: 800 !important;
+    color: var(--primary) !important;
+}
+
+@media (max-width: 768px) {
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+}
+
 .modal-header {
     background: linear-gradient(135deg, #0A7BC4 0%, #1E9FE8 100%);
     color: #FFFFFF;

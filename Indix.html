@@ -189,6 +189,7 @@
             <div class="modal-tabs">
                 <button class="modal-tab active" data-tab="info">📋 Información</button>
                 <button class="modal-tab" data-tab="measurement">📏 Medición</button>
+                <button class="modal-tab" data-tab="data">📊 Datos M&E</button>
                 <button class="modal-tab" data-tab="guidance">📖 Guía</button>
             </div>
 
@@ -212,10 +213,6 @@
                         <p id="modalTipo"></p>
                     </div>
                     <div class="modal-field">
-                        <label>Departamento</label>
-                        <p id="modalDepto"></p>
-                    </div>
-                    <div class="modal-field">
                         <label>Programa</label>
                         <p id="modalPrograma"></p>
                     </div>
@@ -223,36 +220,98 @@
                         <label>Nivel de Medición</label>
                         <p id="modalNivel"></p>
                     </div>
+                    <div class="modal-field">
+                        <label>Herramienta</label>
+                        <p id="modalHerramienta"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>Responsable de Recolección</label>
+                        <p id="modalResponsable"></p>
+                    </div>
                 </div>
 
                 <!-- TAB: MEDICIÓN -->
                 <div class="modal-tab-content" id="tabMeasurement">
                     <div class="modal-field">
-                        <label>🧮 Fórmula de Cálculo</label>
-                        <div class="formula-box" id="modalFormula">
-                            <p>% = (Numerador / Denominador) × 100</p>
-                        </div>
-                    </div>
-                    <div class="modal-field">
-                        <label>📊 Desagregación Recomendada</label>
-                        <p id="modalDesagregacion">Por sexo, edad, ubicación geográfica</p>
-                    </div>
-                    <div class="modal-field">
-                        <label>📅 Periodicidad de Medición</label>
+                        <label>📅 Periodicidad / Tiempo</label>
                         <p id="modalPeriodicidad"></p>
                     </div>
                     <div class="modal-field">
-                        <label>🎯 Meta/Objetivo</label>
-                        <p id="modalMeta">Definir según contexto del proyecto</p>
+                        <label>📊 Frecuencia</label>
+                        <p id="modalFrecuencia"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>📋 Desagregación</label>
+                        <p id="modalDesagregacion"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>✅ Ya recogiendo datos?</label>
+                        <p id="modalRecogiendoDatos"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>📍 Estado de Fuente</label>
+                        <p id="modalEstadoFuente"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>🔧 Se necesita campo en SF?</label>
+                        <p id="modalNecesitaCampoSF"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>📦 Estado en SF</label>
+                        <p id="modalEstadoSF"></p>
+                    </div>
+                </div>
+
+                <!-- TAB: DATOS M&E -->
+                <div class="modal-tab-content" id="tabData">
+                    <div class="modal-field">
+                        <label>📈 Histórico 2024</label>
+                        <p id="modalHistorico2024" class="metric-value"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>🎯 Target 2025</label>
+                        <p id="modalTarget2025" class="metric-value"></p>
+                    </div>
+                    <div class="modal-field">
+                        <label>🔮 Proyecciones 2026</label>
+                        <p id="modalProyecciones2026" class="metric-value"></p>
+                    </div>
+
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 0.5rem;">📅 Datos Mensuales y Trimestrales</h4>
+
+                    <div class="metrics-grid">
+                        <div class="modal-field"><label>M1</label><p id="modalM1"></p></div>
+                        <div class="modal-field"><label>M2</label><p id="modalM2"></p></div>
+                        <div class="modal-field"><label>M3</label><p id="modalM3"></p></div>
+                        <div class="modal-field quarter"><label>Q1</label><p id="modalQ1"></p></div>
+
+                        <div class="modal-field"><label>M4</label><p id="modalM4"></p></div>
+                        <div class="modal-field"><label>M5</label><p id="modalM5"></p></div>
+                        <div class="modal-field"><label>M6</label><p id="modalM6"></p></div>
+                        <div class="modal-field quarter"><label>Q2</label><p id="modalQ2"></p></div>
+
+                        <div class="modal-field"><label>M7</label><p id="modalM7"></p></div>
+                        <div class="modal-field"><label>M8</label><p id="modalM8"></p></div>
+                        <div class="modal-field"><label>M9</label><p id="modalM9"></p></div>
+                        <div class="modal-field quarter"><label>Q3</label><p id="modalQ3"></p></div>
+
+                        <div class="modal-field"><label>M10</label><p id="modalM10"></p></div>
+                        <div class="modal-field"><label>M11</label><p id="modalM11"></p></div>
+                        <div class="modal-field"><label>M12</label><p id="modalM12"></p></div>
+                        <div class="modal-field quarter"><label>Q4</label><p id="modalQ4"></p></div>
                     </div>
                 </div>
 
                 <!-- TAB: GUÍA -->
                 <div class="modal-tab-content" id="tabGuidance">
                     <div class="modal-field">
+                        <label>✅ Fuentes de Verificación</label>
+                        <p id="modalFuenteVerificacion"></p>
+                    </div>
+                    <div class="modal-field">
                         <label>📝 Guía de Recolección de Datos</label>
                         <div class="guidance-box">
-                            <ol id="modalGuia">
+                            <ol>
                                 <li>Identificar la fuente de datos apropiada</li>
                                 <li>Definir el método de recolección</li>
                                 <li>Establecer el tamaño de muestra necesario</li>
@@ -262,18 +321,14 @@
                         </div>
                     </div>
                     <div class="modal-field">
-                        <label>✅ Fuentes de Verificación</label>
-                        <p id="modalFuentes">Registros administrativos, encuestas, entrevistas, observación directa</p>
-                    </div>
-                    <div class="modal-field">
                         <label>💡 Ejemplo Práctico</label>
-                        <div class="example-box" id="modalEjemplo">
+                        <div class="example-box">
                             <p>Si 75 de 100 participantes completaron el programa, el indicador sería: (75/100) × 100 = 75%</p>
                         </div>
                     </div>
                     <div class="modal-field">
                         <label>⚠️ Consideraciones</label>
-                        <p id="modalConsideraciones">Asegurar que los datos sean representativos y verificables</p>
+                        <p>Asegurar que los datos sean representativos y verificables</p>
                     </div>
                 </div>
             </div>
