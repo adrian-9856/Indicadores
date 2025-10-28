@@ -304,9 +304,13 @@ function extraerNombrePrograma(criterio) {
     // Buscar patrones comunes en criterios
     const criterioLower = criterio.toLowerCase();
 
-    // Mapeo de palabras clave a nombres de programas
+    // Mapeo de palabras clave a nombres de programas (ESTRUCTURA CREAMOS)
     if (criterioLower.includes('educación') || criterioLower.includes('educacion')) return 'Educación';
     if (criterioLower.includes('apoyo emocional') || criterioLower.includes('emocional')) return 'Apoyo Emocional';
+    if (criterioLower.includes('mi-eelo') || criterioLower.includes('mieelo') || criterioLower.includes('mi eelo')) return 'Mi-Eelo';
+    if (criterioLower.includes('inclusión laboral') || criterioLower.includes('inclusion laboral') || criterioLower.includes('laboral')) return 'Inclusión Laboral';
+
+    // Otros programas adicionales
     if (criterioLower.includes('empoderamiento') || criterioLower.includes('empoderan')) return 'Empoderamiento';
     if (criterioLower.includes('protección') || criterioLower.includes('proteccion')) return 'Protección';
     if (criterioLower.includes('salud')) return 'Salud';
@@ -394,7 +398,10 @@ function renderizarDiagrama() {
 
     // CASO 2: Se seleccionó un programa específico - mostrar sus indicadores
     if (programaSeleccionado) {
-        const indsProgramaFiltrados = indsFiltrados.filter(i => i.nombrePrograma === programaSeleccionado);
+        const indsProgramaFiltrados = indsFiltrados.filter(i =>
+            i.nombrePrograma === programaSeleccionado ||
+            i.criterio.toLowerCase().includes(programaSeleccionado.toLowerCase())
+        );
 
         if (indsProgramaFiltrados.length === 0) {
             indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-secondary);">No hay indicadores que coincidan con los filtros seleccionados</p>';
@@ -418,31 +425,29 @@ function renderizarDiagrama() {
         return;
     }
 
-    // CASO 3: Por defecto - mostrar NOMBRES DE PROGRAMAS
-    const nombresUnicos = [...new Set(indicadores.map(i => i.nombrePrograma))].sort();
+    // CASO 3: Por defecto - mostrar ESTRUCTURA FIJA DE PROGRAMAS CREAMOS
+    // Estructura fija: CREAMOS → Apoyo Emocional, Educación, Mi-Eelo, Inclusión Laboral
+    const programasCREAMOS = [
+        { nombre: 'Apoyo Emocional', icono: '💙' },
+        { nombre: 'Educación', icono: '📚' },
+        { nombre: 'Mi-Eelo', icono: '🌟' },
+        { nombre: 'Inclusión Laboral', icono: '💼' }
+    ];
 
-    if (nombresUnicos.length === 0) {
-        programasLevel.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-secondary);">No hay programas disponibles</p>';
-        return;
-    }
+    programasCREAMOS.forEach(programa => {
+        const nombreProg = programa.nombre;
+        const icono = programa.icono;
 
-    // Iconos por tipo de programa
-    const iconosPorPrograma = {
-        'Educación': '📚',
-        'Apoyo Emocional': '💙',
-        'Empoderamiento': '💪',
-        'Protección': '🛡️',
-        'Salud': '🏥',
-        'Nutrición': '🍎',
-        'Agua y Saneamiento': '💧',
-        'Medios de Vida': '💼',
-        'Incidencia': '📣'
-    };
+        // Contar indicadores que pertenecen a este programa
+        const indsPrograma = indicadores.filter(i =>
+            i.nombrePrograma === nombreProg ||
+            i.criterio.toLowerCase().includes(nombreProg.toLowerCase())
+        );
 
-    nombresUnicos.forEach(nombreProg => {
-        const indsPrograma = indicadores.filter(i => i.nombrePrograma === nombreProg);
-        const indsProgramaFiltrados = indsFiltrados.filter(i => i.nombrePrograma === nombreProg);
-        const icono = iconosPorPrograma[nombreProg] || '✨';
+        const indsProgramaFiltrados = indsFiltrados.filter(i =>
+            i.nombrePrograma === nombreProg ||
+            i.criterio.toLowerCase().includes(nombreProg.toLowerCase())
+        );
 
         const node = document.createElement('div');
         node.className = 'diagram-node programa-node';
