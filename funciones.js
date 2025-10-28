@@ -418,107 +418,182 @@ function renderizarDiagrama() {
 
     // Contar todos los indicadores filtrados
     const indsFiltrados = obtenerIndicadoresFiltrados();
-    document.getElementById('rootCount').textContent = `${indsFiltrados.length}/${indicadores.length} indicadores`;
 
     programasLevel.innerHTML = '';
     indicadoresLevel.innerHTML = '';
 
-    // Actualizar clase selected del nodo raíz
-    if (programaSeleccionado === 'CREAMOS') {
+    // CASO 1: Se seleccionó CREAMOS - mostrar todos los programas
+    if (!programaSeleccionado || programaSeleccionado === 'CREAMOS') {
+        // Mostrar CREAMOS como raíz
+        rootNode.innerHTML = `
+            <div class="node-icon">🌟</div>
+            <div class="node-title">CREAMOS</div>
+            <div class="node-count">${indsFiltrados.length}/${indicadores.length} indicadores</div>
+        `;
         rootNode.classList.add('selected');
-    } else {
-        rootNode.classList.remove('selected');
-    }
 
-    // CASO 1: Se seleccionó CREAMOS - mostrar TODOS los indicadores
-    if (programaSeleccionado === 'CREAMOS') {
-        if (indsFiltrados.length === 0) {
-            indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-secondary);">No hay indicadores que coincidan con los filtros seleccionados</p>';
-        } else {
-            indsFiltrados.forEach(ind => {
-                const node = document.createElement('div');
-                node.className = `diagram-node indicador-node tipo-${ind.tipo.toLowerCase().replace(' ', '-')}`;
-                const nombreCorto = ind.nombre.length > 50 ? ind.nombre.substring(0, 50) + '...' : ind.nombre;
-                node.innerHTML = `
-                    <div class="node-code">${ind.codigo}</div>
-                    <div class="node-label">${nombreCorto}</div>
-                    <div class="node-type">${ind.tipo}</div>
-                `;
-                node.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    abrirModal(ind);
-                });
-                indicadoresLevel.appendChild(node);
-            });
-        }
+        // Mostrar todos los programas
+        const programasCREAMOS = [
+            { codigo: 'CEEX', nombre: 'Educación (CEEX)', icono: '📚' },
+            { codigo: 'IL', nombre: 'Inclusión Laboral (IL)', icono: '💼' },
+            { codigo: 'ME', nombre: 'Mi-Eelo (ME)', icono: '🌟' },
+            { codigo: 'AE', nombre: 'Apoyo Emocional (AE)', icono: '💙' },
+            { codigo: 'CCI', nombre: 'Centro de Cuidado Infantil (CCI)', icono: '👶' }
+        ];
+
+        programasCREAMOS.forEach(programa => {
+            const codigoProg = programa.codigo;
+            const nombreProg = programa.nombre;
+            const icono = programa.icono;
+
+            // Contar indicadores que pertenecen a este programa
+            const indsPrograma = indicadores.filter(i => i.programa === codigoProg);
+            const indsProgramaFiltrados = indsFiltrados.filter(i => i.programa === codigoProg);
+
+            const node = document.createElement('div');
+            node.className = 'diagram-node programa-node';
+            node.dataset.programa = nombreProg;
+            node.innerHTML = `
+                <div class="node-icon">${icono}</div>
+                <div class="node-label">${nombreProg}</div>
+                <div class="node-count">${indsProgramaFiltrados.length}/${indsPrograma.length} indicadores</div>
+            `;
+            node.addEventListener('click', () => seleccionarPrograma(nombreProg));
+            programasLevel.appendChild(node);
+        });
+
+        indicadoresLevel.innerHTML = '';
         return;
     }
 
-    // CASO 2: Se seleccionó un programa específico - mostrar sus indicadores
+    // CASO 2: Se seleccionó un programa específico - mostrar ese programa arriba y sus indicadores abajo
     if (programaSeleccionado) {
+        rootNode.classList.remove('selected');
+
+        // Encontrar el programa seleccionado
+        const programasCREAMOS = [
+            { codigo: 'CEEX', nombre: 'Educación (CEEX)', icono: '📚' },
+            { codigo: 'IL', nombre: 'Inclusión Laboral (IL)', icono: '💼' },
+            { codigo: 'ME', nombre: 'Mi-Eelo (ME)', icono: '🌟' },
+            { codigo: 'AE', nombre: 'Apoyo Emocional (AE)', icono: '💙' },
+            { codigo: 'CCI', nombre: 'Centro de Cuidado Infantil (CCI)', icono: '👶' }
+        ];
+
+        const programaEncontrado = programasCREAMOS.find(p => p.nombre === programaSeleccionado);
+
+        if (programaEncontrado) {
+            // Cambiar el nodo raíz para mostrar el programa seleccionado
+            rootNode.innerHTML = `
+                <div class="node-icon">${programaEncontrado.icono}</div>
+                <div class="node-title">${programaEncontrado.nombre}</div>
+                <div class="node-count" id="rootCount">Programa seleccionado</div>
+            `;
+            rootNode.classList.add('selected', 'programa-selected');
+        }
+
+        // Filtrar indicadores del programa seleccionado
         const indsProgramaFiltrados = indsFiltrados.filter(i =>
             i.nombrePrograma === programaSeleccionado ||
             i.criterio.toLowerCase().includes(programaSeleccionado.toLowerCase())
         );
 
+        // Ocultar la fila de programas
+        programasLevel.style.display = 'none';
+
+        // Mostrar indicadores agrupados por tipo
         if (indsProgramaFiltrados.length === 0) {
             indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-secondary);">No hay indicadores que coincidan con los filtros seleccionados</p>';
         } else {
+            // Agrupar por tipo
+            const porTipo = {
+                'Impacto': [],
+                'Resultado': [],
+                'Proceso': [],
+                'No especificado': []
+            };
+
             indsProgramaFiltrados.forEach(ind => {
-                const node = document.createElement('div');
-                node.className = `diagram-node indicador-node tipo-${ind.tipo.toLowerCase().replace(' ', '-')}`;
-                const nombreCorto = ind.nombre.length > 50 ? ind.nombre.substring(0, 50) + '...' : ind.nombre;
-                node.innerHTML = `
-                    <div class="node-code">${ind.codigo}</div>
-                    <div class="node-label">${nombreCorto}</div>
-                    <div class="node-type">${ind.tipo}</div>
-                `;
-                node.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    abrirModal(ind);
-                });
-                indicadoresLevel.appendChild(node);
+                const tipo = ind.tipo || 'No especificado';
+                if (!porTipo[tipo]) porTipo[tipo] = [];
+                porTipo[tipo].push(ind);
+            });
+
+            // Renderizar por tipo
+            Object.keys(porTipo).forEach(tipo => {
+                if (porTipo[tipo].length > 0) {
+                    porTipo[tipo].forEach(ind => {
+                        const node = document.createElement('div');
+                        node.className = `diagram-node indicador-node tipo-${ind.tipo.toLowerCase().replace(' ', '-')}`;
+
+                        // Icono según tipo
+                        let tipoIcono = '📊';
+                        if (ind.tipo === 'Impacto') tipoIcono = '💫';
+                        else if (ind.tipo === 'Resultado') tipoIcono = '✅';
+                        else if (ind.tipo === 'Proceso') tipoIcono = '📊';
+
+                        const nombreCorto = ind.nombre.length > 60 ? ind.nombre.substring(0, 60) + '...' : ind.nombre;
+
+                        node.innerHTML = `
+                            <div class="indicator-card">
+                                <div class="indicator-header">
+                                    <span class="indicator-type-badge ${ind.tipo.toLowerCase()}">${tipoIcono} ${ind.tipo}</span>
+                                    <span class="indicator-code">${ind.codigo}</span>
+                                </div>
+                                <div class="indicator-title">${nombreCorto}</div>
+                                <div class="indicator-footer">
+                                    <span class="indicator-meta">${ind.nivel || 'N/A'}</span>
+                                    <span class="indicator-frequency">${ind.tiempo || 'N/A'}</span>
+                                </div>
+                            </div>
+                        `;
+                        node.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            abrirModal(ind);
+                        });
+                        indicadoresLevel.appendChild(node);
+                    });
+                }
             });
         }
+
+        // Mostrar la fila de indicadores
+        indicadoresLevel.style.display = 'flex';
         return;
     }
-
-    // CASO 3: Por defecto - mostrar ESTRUCTURA FIJA DE PROGRAMAS CREAMOS
-    // Estructura fija: CREAMOS → CEEX, IL, ME, AE, CCI
-    const programasCREAMOS = [
-        { codigo: 'CEEX', nombre: 'Educación (CEEX)', icono: '📚' },
-        { codigo: 'IL', nombre: 'Inclusión Laboral (IL)', icono: '💼' },
-        { codigo: 'ME', nombre: 'Mi-Eelo (ME)', icono: '🌟' },
-        { codigo: 'AE', nombre: 'Apoyo Emocional (AE)', icono: '💙' },
-        { codigo: 'CCI', nombre: 'Centro de Cuidado Infantil (CCI)', icono: '👶' }
-    ];
-
-    programasCREAMOS.forEach(programa => {
-        const codigoProg = programa.codigo;
-        const nombreProg = programa.nombre;
-        const icono = programa.icono;
-
-        // Contar indicadores que pertenecen a este programa
-        const indsPrograma = indicadores.filter(i => i.programa === codigoProg);
-        const indsProgramaFiltrados = indsFiltrados.filter(i => i.programa === codigoProg);
-
-        const node = document.createElement('div');
-        node.className = 'diagram-node programa-node';
-        node.dataset.programa = nombreProg;
-        node.innerHTML = `
-            <div class="node-icon">${icono}</div>
-            <div class="node-label">${nombreProg}</div>
-            <div class="node-count">${indsProgramaFiltrados.length}/${indsPrograma.length} indicadores</div>
-        `;
-        node.addEventListener('click', () => seleccionarPrograma(nombreProg));
-        programasLevel.appendChild(node);
-    });
 }
 
 // ===== SELECCIONAR PROGRAMA EN DIAGRAMA =====
 function seleccionarPrograma(programa) {
     programaSeleccionado = programa;
     renderizarDiagrama();
+    actualizarBreadcrumb();
+}
+
+// ===== ACTUALIZAR BREADCRUMB =====
+function actualizarBreadcrumb() {
+    const breadcrumbs = document.getElementById('breadcrumbs');
+
+    if (programaSeleccionado && programaSeleccionado !== 'CREAMOS') {
+        breadcrumbs.innerHTML = `
+            <span class="breadcrumb-item breadcrumb-link" onclick="volverACREAMOS()">🏠 CREAMOS</span>
+            <span class="breadcrumb-separator">›</span>
+            <span class="breadcrumb-item active">${programaSeleccionado}</span>
+        `;
+    } else {
+        breadcrumbs.innerHTML = `
+            <span class="breadcrumb-item active">🏠 Inicio</span>
+            <span class="breadcrumb-separator">›</span>
+            <span class="breadcrumb-item" id="breadcrumbView">Diagrama</span>
+        `;
+    }
+}
+
+// ===== VOLVER A CREAMOS =====
+function volverACREAMOS() {
+    programaSeleccionado = 'CREAMOS';
+    renderizarDiagrama();
+    actualizarBreadcrumb();
+    showToast('Navegación', 'Volviste a la vista principal de CREAMOS', 'info');
 }
 
 // ===== RENDERIZAR VISTA TARJETAS =====
