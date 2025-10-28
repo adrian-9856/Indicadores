@@ -342,7 +342,7 @@ function renderizarDiagrama() {
         rootNode.classList.remove('selected');
     }
 
-    // Si programaSeleccionado es 'CREAMOS', mostrar todos los indicadores
+    // CASO 1: Se seleccionó CREAMOS - mostrar TODOS los indicadores
     if (programaSeleccionado === 'CREAMOS') {
         if (indsFiltrados.length === 0) {
             indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-secondary);">No hay indicadores que coincidan con los filtros seleccionados</p>';
@@ -366,8 +366,8 @@ function renderizarDiagrama() {
         return;
     }
 
-    // Si se seleccionó un programa específico, mostrar sus indicadores
-    if (programaSeleccionado && programaSeleccionado !== 'CREAMOS') {
+    // CASO 2: Se seleccionó un programa específico - mostrar sus indicadores
+    if (programaSeleccionado) {
         const indsProgramaFiltrados = indsFiltrados.filter(i => i.programa === programaSeleccionado);
 
         if (indsProgramaFiltrados.length === 0) {
@@ -392,7 +392,7 @@ function renderizarDiagrama() {
         return;
     }
 
-    // Por defecto, mostrar todos los programas
+    // CASO 3: Por defecto - mostrar PROGRAMAS
     const programasUnicos = [...new Set(indicadores.map(i => i.programa))].sort();
 
     if (programasUnicos.length === 0) {
@@ -401,11 +401,8 @@ function renderizarDiagrama() {
     }
 
     programasUnicos.forEach(prog => {
-        // Filtrar indicadores por programa
         const indsPrograma = indicadores.filter(i => i.programa === prog);
         const indsProgramaFiltrados = indsFiltrados.filter(i => i.programa === prog);
-
-        // Determinar icono según el código del programa
         const icono = prog.includes('I') ? '💫' : prog.includes('P') ? '🎯' : '✅';
 
         const node = document.createElement('div');
@@ -419,8 +416,6 @@ function renderizarDiagrama() {
         node.addEventListener('click', () => seleccionarPrograma(prog));
         programasLevel.appendChild(node);
     });
-
-    indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-secondary);">Haz clic en CREAMOS para ver todos los indicadores, o en un programa específico</p>';
 }
 
 // ===== SELECCIONAR PROGRAMA EN DIAGRAMA =====
@@ -478,76 +473,24 @@ function renderizarLista() {
     const container = document.getElementById('listAccordion');
     container.innerHTML = '';
 
-    const creamosIndicadores = indicadores.filter(i => i.depto === 'Creamos');
-    const otrosDepts = indicadores.filter(i => i.depto !== 'Creamos');
-
-    // ===== CREAMOS =====
-    if (creamosIndicadores.length > 0) {
-        const creamosAccordion = crearAccordion('🌟', 'Creamos', creamosIndicadores.length, true);
-        
-        // Obtener programas únicos de Creamos
-        const programasCreamos = [...new Set(creamosIndicadores.map(i => i.programa))].sort();
-        
-        programasCreamos.forEach(prog => {
-            const progsInds = creamosIndicadores.filter(i => i.programa === prog);
-            const programaDiv = crearPrograma(prog, progsInds);
-            creamosAccordion.content.appendChild(programaDiv);
-        });
-        
-        container.appendChild(creamosAccordion.element);
+    if (indicadores.length === 0) {
+        container.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-secondary);">No hay indicadores cargados</p>';
+        return;
     }
 
-    // ===== OTROS DEPARTAMENTOS =====
-    if (otrosDepts.length > 0) {
-        const otrosAccordion = crearAccordion('📋', 'Otros Departamentos', otrosDepts.length, false);
-        
-        const deptos = [...new Set(otrosDepts.map(i => i.depto))].sort();
-        
-        deptos.forEach(depto => {
-            const deptInds = otrosDepts.filter(i => i.depto === depto);
-            const icono = { 
-                'IL': '💼', 
-                'AE': '💚', 
-                'CEEX': '📚', 
-                'CCI': '👶', 
-                'ME': '👩‍💼' 
-            }[depto] || '📋';
-            
-            const programaDiv = crearPrograma(`${icono} ${depto}`, deptInds);
-            otrosAccordion.content.appendChild(programaDiv);
-        });
-        
-        container.appendChild(otrosAccordion.element);
-    }
+    // Obtener todos los programas únicos
+    const programasUnicos = [...new Set(indicadores.map(i => i.programa))].sort();
+
+    // Crear un accordion por cada programa
+    programasUnicos.forEach(prog => {
+        const progsInds = indicadores.filter(i => i.programa === prog);
+        const icono = prog.includes('I') ? '💫' : prog.includes('P') ? '🎯' : '✅';
+
+        const programaDiv = crearPrograma(`${icono} ${prog}`, progsInds);
+        container.appendChild(programaDiv);
+    });
 
     aplicarFiltros();
-}
-
-// ===== CREAR ACCORDION =====
-function crearAccordion(icono, titulo, count, abierto = false) {
-    const accordionItem = document.createElement('div');
-    accordionItem.className = `accordion-item ${abierto ? 'open' : ''}`;
-    
-    const header = document.createElement('button');
-    header.className = 'accordion-header';
-    header.innerHTML = `
-        <span class="accordion-icon">${icono}</span>
-        <span class="accordion-title">${titulo}</span>
-        <span class="accordion-count">${count}</span>
-        <span class="accordion-toggle">▼</span>
-    `;
-    
-    const content = document.createElement('div');
-    content.className = 'accordion-content';
-    
-    header.addEventListener('click', () => {
-        accordionItem.classList.toggle('open');
-    });
-    
-    accordionItem.appendChild(header);
-    accordionItem.appendChild(content);
-    
-    return { element: accordionItem, content };
 }
 
 // ===== CREAR PROGRAMA =====

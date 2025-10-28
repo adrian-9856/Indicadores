@@ -637,8 +637,9 @@ body {
 .diagram-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 3rem;
+    gap: 0;
     align-items: center;
+    position: relative;
 }
 
 .diagram-container {
@@ -665,19 +666,44 @@ body {
     flex-wrap: wrap;
     justify-content: center;
     gap: 1.5rem;
-    margin-bottom: 2rem;
+    padding: 2rem 0;
     position: relative;
 }
 
-.diagram-row::after {
+/* Línea conectora VERTICAL desde CREAMOS hacia abajo */
+.diagram-row:first-child::after {
     content: '';
     position: absolute;
-    bottom: -1.5rem;
+    bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 2px;
-    height: 1rem;
-    background: var(--border);
+    width: 3px;
+    height: 2rem;
+    background: linear-gradient(to bottom, var(--primary), transparent);
+}
+
+/* Línea conectora HORIZONTAL en el nivel de programas */
+.diagram-row:nth-child(2)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 3px;
+    background: linear-gradient(to right, transparent, var(--primary) 20%, var(--primary) 80%, transparent);
+    transform: translateY(-1rem);
+}
+
+/* Líneas conectoras VERTICALES desde programas hacia indicadores */
+.diagram-row:nth-child(2) .diagram-node::after {
+    content: '';
+    position: absolute;
+    bottom: -2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 3px;
+    height: 2rem;
+    background: linear-gradient(to bottom, var(--primary), transparent);
 }
 
 .diagram-node {
@@ -887,13 +913,18 @@ body {
 }
 
 .programa {
-    border-top: 1px solid var(--border);
+    background: var(--bg-white);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: var(--transition);
+    margin-bottom: 1rem;
 }
 
 .programa-header {
     width: 100%;
-    padding: 1rem 1.5rem;
-    background: transparent;
+    padding: 1.25rem 1.5rem;
+    background: var(--bg-light);
     border: none;
     display: flex;
     align-items: center;
@@ -982,8 +1013,8 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.85);
-    backdrop-filter: blur(8px);
+    background: rgba(0,0,0,0.9);
+    backdrop-filter: blur(10px);
     display: none;
     align-items: center;
     justify-content: center;
@@ -996,7 +1027,7 @@ body {
 }
 
 .modal-content {
-    background: var(--bg-card);
+    background: #FFFFFF;
     border-radius: 20px;
     max-width: 900px;
     width: 100%;
@@ -1004,6 +1035,44 @@ body {
     overflow: hidden;
     box-shadow: 0 25px 50px rgba(0,0,0,0.5);
     border: 2px solid var(--border);
+}
+
+body.dark-mode .modal-content {
+    background: #FFFFFF;
+}
+
+.modal-body {
+    padding: 2rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    background: #FFFFFF;
+}
+
+body.dark-mode .modal-body {
+    background: #FFFFFF;
+}
+
+.modal-field-value {
+    font-size: 1rem;
+    color: #2C3E50;
+    line-height: 1.6;
+}
+
+body.dark-mode .modal-field-value {
+    color: #2C3E50;
+}
+
+.modal-field-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #7F8C8D;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+body.dark-mode .modal-field-label {
+    color: #7F8C8D;
 }
 
 .modal-header {
@@ -1061,8 +1130,13 @@ body {
 
 .modal-tabs {
     display: flex;
-    background: var(--bg-light);
-    border-bottom: 2px solid var(--border);
+    background: #F5F7FA;
+    border-bottom: 2px solid #E1E8ED;
+}
+
+body.dark-mode .modal-tabs {
+    background: #F5F7FA;
+    border-bottom: 2px solid #E1E8ED;
 }
 
 .modal-tab {
@@ -1070,7 +1144,7 @@ body {
     padding: 1rem;
     border: none;
     background: transparent;
-    color: var(--text-secondary);
+    color: #7F8C8D;
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
@@ -1078,21 +1152,29 @@ body {
     border-bottom: 3px solid transparent;
 }
 
+body.dark-mode .modal-tab {
+    color: #7F8C8D;
+}
+
 .modal-tab:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
+    background: #E9ECEF;
+    color: #2C3E50;
+}
+
+body.dark-mode .modal-tab:hover {
+    background: #E9ECEF;
+    color: #2C3E50;
 }
 
 .modal-tab.active {
-    color: var(--primary);
-    border-bottom-color: var(--primary);
-    background: var(--bg-white);
+    color: #0A7BC4;
+    border-bottom-color: #0A7BC4;
+    background: #FFFFFF;
 }
 
-.modal-body {
-    padding: 2rem;
-    max-height: 60vh;
-    overflow-y: auto;
+body.dark-mode .modal-tab.active {
+    color: #0A7BC4;
+    background: #FFFFFF;
 }
 
 .modal-tab-content {
@@ -1107,36 +1189,26 @@ body {
     margin-bottom: 1.5rem;
 }
 
-.modal-field-label {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 0.5rem;
-}
-
-.modal-field-value {
-    font-size: 1rem;
-    color: var(--text-primary);
-    line-height: 1.6;
-}
-
 .modal-footer {
     padding: 1.5rem 2rem;
-    background: var(--bg-light);
-    border-top: 1px solid var(--border);
+    background: #F5F7FA;
+    border-top: 1px solid #E1E8ED;
     display: flex;
     gap: 1rem;
     justify-content: flex-end;
 }
 
+body.dark-mode .modal-footer {
+    background: #F5F7FA;
+    border-top: 1px solid #E1E8ED;
+}
+
 .modal-btn {
     padding: 0.75rem 1.5rem;
-    border: 2px solid var(--border);
+    border: 2px solid #E1E8ED;
     border-radius: 10px;
-    background: var(--bg-white);
-    color: var(--text-primary);
+    background: #FFFFFF;
+    color: #2C3E50;
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
@@ -1146,12 +1218,18 @@ body {
     gap: 0.5rem;
 }
 
+body.dark-mode .modal-btn {
+    background: #FFFFFF;
+    color: #2C3E50;
+    border-color: #E1E8ED;
+}
+
 .modal-btn:hover {
-    background: var(--primary);
-    color: var(--text-white);
-    border-color: var(--primary);
+    background: #0A7BC4;
+    color: #FFFFFF;
+    border-color: #0A7BC4;
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 /* ===== EMPTY STATE ===== */
