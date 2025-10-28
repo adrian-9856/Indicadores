@@ -722,11 +722,17 @@ body {
     min-width: 300px;
     border: none;
     box-shadow: var(--shadow-lg);
+    cursor: pointer;
 }
 
 .diagram-node.root-node:hover {
-    cursor: default;
-    transform: none;
+    transform: translateY(-4px);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+}
+
+.diagram-node.root-node.selected {
+    background: var(--gradient-secondary);
+    box-shadow: 0 30px 60px rgba(231,76,60,0.5);
 }
 
 .diagram-node.programa-node {
@@ -976,8 +982,8 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(4px);
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
     display: none;
     align-items: center;
     justify-content: center;
@@ -996,8 +1002,8 @@ body {
     width: 100%;
     max-height: 90vh;
     overflow: hidden;
-    box-shadow: var(--shadow-xl);
-    border: 1px solid var(--border);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    border: 2px solid var(--border);
 }
 
 .modal-header {

@@ -295,58 +295,15 @@ function detectarDepartamento(codigo) {
 
 // ===== ACTUALIZAR ESTADÍSTICAS =====
 function actualizarEstadisticas() {
-    const creamosIndicadores = indicadores.filter(i => i.depto === 'Creamos');
-    const otrosIndicadores = indicadores.filter(i => i.depto !== 'Creamos');
+    const programasUnicos = [...new Set(indicadores.map(i => i.programa))];
 
     document.getElementById('totalCount').textContent = indicadores.length;
-    document.getElementById('creamosCount').textContent = creamosIndicadores.length;
-    document.getElementById('otrosCount').textContent = otrosIndicadores.length;
-}
-
-// ===== GENERAR FILTROS DE DEPARTAMENTO =====
-function generarFiltrosDepartamento() {
-    const departamentos = [...new Set(indicadores.map(i => i.depto))].sort();
-    const container = document.getElementById('filterDepartamentos');
-
-    const iconos = {
-        'Creamos': '🌟',
-        'IL': '💼',
-        'AE': '💚',
-        'CEEX': '📚',
-        'CCI': '👶',
-        'ME': '👩‍💼',
-        'Otros': '📋'
-    };
-
-    container.innerHTML = '';
-
-    departamentos.forEach(depto => {
-        const label = document.createElement('label');
-        label.className = 'filter-item';
-        label.innerHTML = `
-            <input type="checkbox" value="${depto}" class="filter-checkbox filter-depto" checked>
-            <span class="filter-icon">${iconos[depto] || '📋'}</span>
-            <span class="filter-label">${depto}</span>
-        `;
-        container.appendChild(label);
-    });
-
-    // Agregar event listeners a los nuevos checkboxes
-    document.querySelectorAll('.filter-depto').forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-            if (vistaActual === 'list') {
-                aplicarFiltros();
-            } else {
-                renderizarVista();
-            }
-        });
-    });
+    document.getElementById('programasCount').textContent = programasUnicos.length;
 }
 
 // ===== RENDERIZAR TODO =====
 function renderizarTodo() {
     actualizarEstadisticas();
-    generarFiltrosDepartamento();
     renderizarVista();
 }
 
@@ -367,52 +324,28 @@ function renderizarVista() {
 
 // ===== RENDERIZAR VISTA DIAGRAMA =====
 function renderizarDiagrama() {
-    const creamosIndicadores = indicadores.filter(i => i.depto === 'Creamos');
     const programasLevel = document.getElementById('programasRow');
     const indicadoresLevel = document.getElementById('indicadoresRow');
+    const rootNode = document.getElementById('rootNode');
 
-    // Contar solo indicadores de Creamos que pasan los filtros
-    const creamosFiltrados = obtenerIndicadoresFiltrados().filter(i => i.depto === 'Creamos');
-    document.getElementById('rootCount').textContent = `${creamosFiltrados.length}/${creamosIndicadores.length} indicadores`;
+    // Contar todos los indicadores filtrados
+    const indsFiltrados = obtenerIndicadoresFiltrados();
+    document.getElementById('rootCount').textContent = `${indsFiltrados.length}/${indicadores.length} indicadores`;
 
     programasLevel.innerHTML = '';
     indicadoresLevel.innerHTML = '';
 
-    // Obtener programas únicos de Creamos
-    const programasUnicos = [...new Set(creamosIndicadores.map(i => i.programa))].sort();
-
-    if (programasUnicos.length === 0) {
-        programasLevel.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">No hay programas de Creamos</p>';
-        return;
+    // Actualizar clase selected del nodo raíz
+    if (programaSeleccionado === 'CREAMOS') {
+        rootNode.classList.add('selected');
+    } else {
+        rootNode.classList.remove('selected');
     }
 
-    programasUnicos.forEach(prog => {
-        // Filtrar por programa Y por filtros de tipo
-        const indsPrograma = creamosIndicadores.filter(i => i.programa === prog);
-        const indsFiltrados = obtenerIndicadoresFiltrados().filter(i => i.programa === prog && i.depto === 'Creamos');
-
-        // Determinar icono según el código del programa
-        const icono = prog.includes('I') ? '💫' : prog.includes('P') ? '🎯' : '✅';
-
-        const node = document.createElement('div');
-        node.className = `diagram-node programa-node ${programaSeleccionado === prog ? 'selected' : ''}`;
-        node.dataset.programa = prog;
-        node.innerHTML = `
-            <div class="node-icon">${icono}</div>
-            <div class="node-label">${prog}</div>
-            <div class="node-count">${indsFiltrados.length}/${indsPrograma.length}</div>
-        `;
-        node.addEventListener('click', () => seleccionarPrograma(prog));
-        programasLevel.appendChild(node);
-    });
-
-    // Mostrar indicadores del programa seleccionado
-    if (programaSeleccionado) {
-        const indsFiltrados = obtenerIndicadoresFiltrados()
-            .filter(i => i.programa === programaSeleccionado && i.depto === 'Creamos');
-
+    // Si programaSeleccionado es 'CREAMOS', mostrar todos los indicadores
+    if (programaSeleccionado === 'CREAMOS') {
         if (indsFiltrados.length === 0) {
-            indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">No hay indicadores que coincidan con los filtros seleccionados</p>';
+            indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-secondary);">No hay indicadores que coincidan con los filtros seleccionados</p>';
         } else {
             indsFiltrados.forEach(ind => {
                 const node = document.createElement('div');
@@ -423,22 +356,76 @@ function renderizarDiagrama() {
                     <div class="node-label">${nombreCorto}</div>
                     <div class="node-type">${ind.tipo}</div>
                 `;
-                node.addEventListener('click', () => abrirModal(ind));
+                node.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    abrirModal(ind);
+                });
                 indicadoresLevel.appendChild(node);
             });
         }
-    } else {
-        indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">Haz clic en un programa para ver sus indicadores</p>';
+        return;
     }
+
+    // Si se seleccionó un programa específico, mostrar sus indicadores
+    if (programaSeleccionado && programaSeleccionado !== 'CREAMOS') {
+        const indsProgramaFiltrados = indsFiltrados.filter(i => i.programa === programaSeleccionado);
+
+        if (indsProgramaFiltrados.length === 0) {
+            indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-secondary);">No hay indicadores que coincidan con los filtros seleccionados</p>';
+        } else {
+            indsProgramaFiltrados.forEach(ind => {
+                const node = document.createElement('div');
+                node.className = `diagram-node indicador-node tipo-${ind.tipo.toLowerCase().replace(' ', '-')}`;
+                const nombreCorto = ind.nombre.length > 50 ? ind.nombre.substring(0, 50) + '...' : ind.nombre;
+                node.innerHTML = `
+                    <div class="node-code">${ind.codigo}</div>
+                    <div class="node-label">${nombreCorto}</div>
+                    <div class="node-type">${ind.tipo}</div>
+                `;
+                node.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    abrirModal(ind);
+                });
+                indicadoresLevel.appendChild(node);
+            });
+        }
+        return;
+    }
+
+    // Por defecto, mostrar todos los programas
+    const programasUnicos = [...new Set(indicadores.map(i => i.programa))].sort();
+
+    if (programasUnicos.length === 0) {
+        programasLevel.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-secondary);">No hay programas disponibles</p>';
+        return;
+    }
+
+    programasUnicos.forEach(prog => {
+        // Filtrar indicadores por programa
+        const indsPrograma = indicadores.filter(i => i.programa === prog);
+        const indsProgramaFiltrados = indsFiltrados.filter(i => i.programa === prog);
+
+        // Determinar icono según el código del programa
+        const icono = prog.includes('I') ? '💫' : prog.includes('P') ? '🎯' : '✅';
+
+        const node = document.createElement('div');
+        node.className = 'diagram-node programa-node';
+        node.dataset.programa = prog;
+        node.innerHTML = `
+            <div class="node-icon">${icono}</div>
+            <div class="node-label">${prog}</div>
+            <div class="node-count">${indsProgramaFiltrados.length}/${indsPrograma.length}</div>
+        `;
+        node.addEventListener('click', () => seleccionarPrograma(prog));
+        programasLevel.appendChild(node);
+    });
+
+    indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-secondary);">Haz clic en CREAMOS para ver todos los indicadores, o en un programa específico</p>';
 }
 
 // ===== SELECCIONAR PROGRAMA EN DIAGRAMA =====
 function seleccionarPrograma(programa) {
-    if (programaSeleccionado === programa) {
-        programaSeleccionado = null;
-    } else {
-        programaSeleccionado = programa;
-    }
+    programaSeleccionado = programa;
     renderizarDiagrama();
 }
 
@@ -456,60 +443,33 @@ function renderizarTarjetas() {
     container.innerHTML = '';
 
     if (indsFiltrados.length === 0) {
-        container.innerHTML = '<p style="text-align:center;padding:40px;color:#999;">No hay indicadores que coincidan con los filtros</p>';
+        container.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-secondary);">No hay indicadores que coincidan con los filtros</p>';
         return;
     }
 
-    // Agrupar por programa
-    const porPrograma = {};
+    // Renderizar cada indicador individual
     indsFiltrados.forEach(ind => {
-        if (!porPrograma[ind.programa]) {
-            porPrograma[ind.programa] = [];
-        }
-        porPrograma[ind.programa].push(ind);
-    });
+        const icono = ind.programa.includes('I') ? '💫' : ind.programa.includes('P') ? '🎯' : '✅';
+        const tipoClass = ind.tipo.toLowerCase().replace(' ', '-');
 
-    // Renderizar por programa
-    Object.keys(porPrograma).sort().forEach(programa => {
-        const programaInds = porPrograma[programa];
-        const departamento = programaInds[0].depto; // Obtener departamento del primer indicador
-        const icono = programa.includes('I') ? '💫' : programa.includes('P') ? '🎯' : '✅';
-
-        // Iconos por departamento
-        const iconoDepto = {
-            'Creamos': '🌟',
-            'IL': '💼',
-            'AE': '💚',
-            'CEEX': '📚',
-            'CCI': '👶',
-            'ME': '👩‍💼',
-            'Otros': '📋'
-        }[departamento] || '📋';
-
-        // Crear tarjeta de programa
-        const programCard = document.createElement('div');
-        programCard.className = 'program-card';
-        programCard.innerHTML = `
+        // Crear tarjeta de indicador
+        const indicadorCard = document.createElement('div');
+        indicadorCard.className = 'program-card';
+        indicadorCard.innerHTML = `
             <div class="program-icon">${icono}</div>
-            <div class="program-name">${programa}</div>
-            <div class="program-department">${iconoDepto} ${departamento}</div>
-            <div class="program-count">${programaInds.length} indicadores</div>
+            <div class="program-name">${ind.codigo}</div>
+            <div class="program-department">${ind.nombre}</div>
+            <div class="program-count">Programa: ${ind.programa}</div>
             <div class="program-types">
-                ${[...new Set(programaInds.map(i => i.tipo))].map(tipo => {
-                    const tipoClass = tipo.toLowerCase().replace(' ', '-');
-                    return `<span class="type-badge ${tipoClass}">${tipo}</span>`;
-                }).join('')}
+                <span class="type-badge ${tipoClass}">${ind.tipo}</span>
             </div>
         `;
 
-        programCard.addEventListener('click', () => {
-            // Mostrar el primer indicador del programa como ejemplo
-            if (programaInds.length > 0) {
-                abrirModal(programaInds[0]);
-            }
+        indicadorCard.addEventListener('click', () => {
+            abrirModal(ind);
         });
 
-        container.appendChild(programCard);
+        container.appendChild(indicadorCard);
     });
 }
 
@@ -633,8 +593,6 @@ function obtenerIndicadoresFiltrados() {
     const texto = searchInput.value.toLowerCase();
     const filtrosTipo = document.querySelectorAll('.filter-tipo:checked');
     const tiposFiltrados = Array.from(filtrosTipo).map(f => f.value);
-    const filtrosDepto = document.querySelectorAll('.filter-depto:checked');
-    const deptosFiltrados = Array.from(filtrosDepto).map(f => f.value);
 
     return indicadores.filter(ind => {
         const coincideTexto =
@@ -643,9 +601,8 @@ function obtenerIndicadoresFiltrados() {
             ind.criterio.toLowerCase().includes(texto);
 
         const coincideTipo = tiposFiltrados.includes(ind.tipo);
-        const coincideDepto = deptosFiltrados.includes(ind.depto);
 
-        return coincideTexto && coincideTipo && coincideDepto;
+        return coincideTexto && coincideTipo;
     });
 }
 
@@ -940,24 +897,22 @@ document.querySelectorAll('.filter-tipo').forEach(checkbox => {
     });
 });
 
-// Event listeners para botones de selección masiva de departamentos
-document.getElementById('btnSelectAllDept').addEventListener('click', () => {
-    document.querySelectorAll('.filter-depto').forEach(cb => cb.checked = true);
-    if (vistaActual === 'list') {
-        aplicarFiltros();
-    } else {
-        renderizarVista();
-    }
-});
-
-document.getElementById('btnSelectNoneDept').addEventListener('click', () => {
-    document.querySelectorAll('.filter-depto').forEach(cb => cb.checked = false);
-    if (vistaActual === 'list') {
-        aplicarFiltros();
-    } else {
-        renderizarVista();
-    }
-});
+// Event listener para el nodo raíz (CREAMOS)
+const rootNode = document.getElementById('rootNode');
+if (rootNode) {
+    rootNode.addEventListener('click', () => {
+        if (programaSeleccionado === 'CREAMOS') {
+            // Si ya está seleccionado, deseleccionar
+            programaSeleccionado = null;
+            rootNode.classList.remove('selected');
+        } else {
+            // Seleccionar CREAMOS
+            programaSeleccionado = 'CREAMOS';
+            rootNode.classList.add('selected');
+        }
+        renderizarDiagrama();
+    });
+}
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {

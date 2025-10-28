@@ -82,31 +82,17 @@
                 </div>
             </div>
 
-            <!-- FILTROS POR DEPARTAMENTO -->
-            <div class="sidebar-card">
-                <h3 class="sidebar-title">🏢 Filtrar por Departamento</h3>
-                <div class="filter-group" id="filterDepartamentos">
-                    <!-- Se llenará dinámicamente con JavaScript -->
-                </div>
-                <button class="btn-filter-all" id="btnSelectAllDept">✓ Todos</button>
-                <button class="btn-filter-none" id="btnSelectNoneDept">✗ Ninguno</button>
-            </div>
-
             <!-- ESTADÍSTICAS -->
             <div class="sidebar-card">
                 <h3 class="sidebar-title">📈 Estadísticas</h3>
                 <div class="stats-grid">
                     <div class="stat-item">
                         <div class="stat-number" id="totalCount">0</div>
-                        <div class="stat-label">Total</div>
+                        <div class="stat-label">Total Indicadores</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number" id="creamosCount">0</div>
-                        <div class="stat-label">Creamos</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number" id="otrosCount">0</div>
-                        <div class="stat-label">Otros</div>
+                        <div class="stat-number" id="programasCount">0</div>
+                        <div class="stat-label">Programas</div>
                     </div>
                 </div>
             </div>
@@ -139,7 +125,7 @@
                 </div>
                 <div class="diagram-wrapper">
                     <div class="diagram-row">
-                        <div class="diagram-node root-node">
+                        <div class="diagram-node root-node" id="rootNode">
                             <div class="node-icon">🌟</div>
                             <div class="node-title">CREAMOS</div>
                             <div class="node-count" id="rootCount">0</div>
