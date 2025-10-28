@@ -80,6 +80,9 @@ async function cargarDatos() {
             // Extraer programa del código
             const programa = codigo.includes('.') ? codigo.split('.')[0] + '.' + codigo.split('.')[1].charAt(0) : codigo.split('.')[0];
 
+            // Extraer nombre del programa desde el criterio
+            const nombrePrograma = extraerNombrePrograma(criterio);
+
             indicadores.push({
                 codigo,
                 criterio,
@@ -89,7 +92,8 @@ async function cargarDatos() {
                 depto,
                 nivel,
                 tiempo,
-                programa
+                programa,
+                nombrePrograma
             });
         }
 
@@ -293,6 +297,28 @@ function detectarDepartamento(codigo) {
     return 'Otros';
 }
 
+// ===== EXTRAER NOMBRE DEL PROGRAMA =====
+function extraerNombrePrograma(criterio) {
+    if (!criterio) return 'Sin programa';
+
+    // Buscar patrones comunes en criterios
+    const criterioLower = criterio.toLowerCase();
+
+    // Mapeo de palabras clave a nombres de programas
+    if (criterioLower.includes('educación') || criterioLower.includes('educacion')) return 'Educación';
+    if (criterioLower.includes('apoyo emocional') || criterioLower.includes('emocional')) return 'Apoyo Emocional';
+    if (criterioLower.includes('empoderamiento') || criterioLower.includes('empoderan')) return 'Empoderamiento';
+    if (criterioLower.includes('protección') || criterioLower.includes('proteccion')) return 'Protección';
+    if (criterioLower.includes('salud')) return 'Salud';
+    if (criterioLower.includes('nutrición') || criterioLower.includes('nutricion')) return 'Nutrición';
+    if (criterioLower.includes('agua') || criterioLower.includes('saneamiento')) return 'Agua y Saneamiento';
+    if (criterioLower.includes('medios de vida') || criterioLower.includes('mevida')) return 'Medios de Vida';
+    if (criterioLower.includes('incidencia') || criterioLower.includes('advocacy')) return 'Incidencia';
+
+    // Si no coincide con ninguno, usar el criterio como está
+    return criterio.split('-')[0].trim();
+}
+
 // ===== ACTUALIZAR ESTADÍSTICAS =====
 function actualizarEstadisticas() {
     const programasUnicos = [...new Set(indicadores.map(i => i.programa))];
@@ -368,7 +394,7 @@ function renderizarDiagrama() {
 
     // CASO 2: Se seleccionó un programa específico - mostrar sus indicadores
     if (programaSeleccionado) {
-        const indsProgramaFiltrados = indsFiltrados.filter(i => i.programa === programaSeleccionado);
+        const indsProgramaFiltrados = indsFiltrados.filter(i => i.nombrePrograma === programaSeleccionado);
 
         if (indsProgramaFiltrados.length === 0) {
             indicadoresLevel.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-secondary);">No hay indicadores que coincidan con los filtros seleccionados</p>';
@@ -392,28 +418,41 @@ function renderizarDiagrama() {
         return;
     }
 
-    // CASO 3: Por defecto - mostrar PROGRAMAS
-    const programasUnicos = [...new Set(indicadores.map(i => i.programa))].sort();
+    // CASO 3: Por defecto - mostrar NOMBRES DE PROGRAMAS
+    const nombresUnicos = [...new Set(indicadores.map(i => i.nombrePrograma))].sort();
 
-    if (programasUnicos.length === 0) {
+    if (nombresUnicos.length === 0) {
         programasLevel.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-secondary);">No hay programas disponibles</p>';
         return;
     }
 
-    programasUnicos.forEach(prog => {
-        const indsPrograma = indicadores.filter(i => i.programa === prog);
-        const indsProgramaFiltrados = indsFiltrados.filter(i => i.programa === prog);
-        const icono = prog.includes('I') ? '💫' : prog.includes('P') ? '🎯' : '✅';
+    // Iconos por tipo de programa
+    const iconosPorPrograma = {
+        'Educación': '📚',
+        'Apoyo Emocional': '💙',
+        'Empoderamiento': '💪',
+        'Protección': '🛡️',
+        'Salud': '🏥',
+        'Nutrición': '🍎',
+        'Agua y Saneamiento': '💧',
+        'Medios de Vida': '💼',
+        'Incidencia': '📣'
+    };
+
+    nombresUnicos.forEach(nombreProg => {
+        const indsPrograma = indicadores.filter(i => i.nombrePrograma === nombreProg);
+        const indsProgramaFiltrados = indsFiltrados.filter(i => i.nombrePrograma === nombreProg);
+        const icono = iconosPorPrograma[nombreProg] || '✨';
 
         const node = document.createElement('div');
         node.className = 'diagram-node programa-node';
-        node.dataset.programa = prog;
+        node.dataset.programa = nombreProg;
         node.innerHTML = `
             <div class="node-icon">${icono}</div>
-            <div class="node-label">${prog}</div>
-            <div class="node-count">${indsProgramaFiltrados.length}/${indsPrograma.length}</div>
+            <div class="node-label">${nombreProg}</div>
+            <div class="node-count">${indsProgramaFiltrados.length}/${indsPrograma.length} indicadores</div>
         `;
-        node.addEventListener('click', () => seleccionarPrograma(prog));
+        node.addEventListener('click', () => seleccionarPrograma(nombreProg));
         programasLevel.appendChild(node);
     });
 }
